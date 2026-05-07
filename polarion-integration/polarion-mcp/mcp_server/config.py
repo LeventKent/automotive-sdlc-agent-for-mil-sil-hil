@@ -59,23 +59,44 @@ class ConfigManager:
         else:
             logger.info("No configuration file found. Using defaults.")
 
+    @staticmethod
+    def _get_project_root() -> Path:
+        """
+        Derive the project root directory.
+
+        The MCP server lives at <project_root>/polarion-integration/polarion-mcp/mcp_server/,
+        so the project root is three levels up from this file's directory.
+        """
+        return Path(__file__).resolve().parent.parent.parent.parent
+
+    def _resolve_relative_path(self, path_str: str) -> Path:
+        """
+        Resolve a path. If relative, resolve it against the project root directory.
+        If absolute, return as-is.
+        """
+        p = Path(path_str)
+        if p.is_absolute():
+            return p
+        return self._get_project_root() / p
+
     def _find_config_path(self, config_path: Optional[str]) -> Optional[Path]:
         """Find the configuration file path."""
         if config_path:
-            return Path(config_path)
+            return self._resolve_relative_path(config_path)
 
         # Check environment variable
         env_path = os.getenv("POLARION_CONFIG_PATH")
         if env_path:
-            return Path(env_path)
+            return self._resolve_relative_path(env_path)
 
-        # Check default locations
+        # Check default locations (relative to project root)
+        project_root = self._get_project_root()
         for filename in [
             "polarion_config.yaml",
             "polarion_config.yml",
             "polarion_config.json",
         ]:
-            path = Path(filename)
+            path = project_root / filename
             if path.exists():
                 return path
 
