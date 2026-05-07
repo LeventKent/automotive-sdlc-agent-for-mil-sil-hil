@@ -25,6 +25,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!polarion-integration/polarion-mcp/lib/
 lib64/
 !frontend/src/lib/
 parts/
