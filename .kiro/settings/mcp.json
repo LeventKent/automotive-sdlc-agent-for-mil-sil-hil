@@ -31,11 +31,17 @@
     "matlab": {
       "command": "/Users/levkent/dev/matlab/matlab-mcp-core-server",
       "args": [
-        "--matlab-root=/Applications/MATLAB_R2025b.app"
+        "--matlab-root=/Applications/MATLAB_R2025b.app",
+        "--extension-file=/Users/levkent/dev/git/automotive-sdlc-agent-for-mil-sil-hil/simulink-agentic-toolkit/tools/tools.json"
       ],
       "autoApprove": [
         "evaluate_matlab_code",
-        "run_matlab_file"
+        "run_matlab_file",
+        "run_matlab_test_file",
+        "check_matlab_code",
+        "detect_matlab_toolboxes",
+        "model_edit",
+        "model_overview"
       ]
     }
   }
