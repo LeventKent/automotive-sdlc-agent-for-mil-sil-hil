@@ -145,3 +145,7 @@ templates/
 .dsr
 
 notebooks/evaluation_results*
+
+# Third-party MCP toolkits installed via scripts/ (not vendored in-tree)
+# See scripts/install-simulink-toolkit.sh
+simulink-agentic-toolkit/

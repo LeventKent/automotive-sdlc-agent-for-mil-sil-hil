@@ -51,18 +51,28 @@ matlab.internal.addons.launchers.showExplorer('tripwire','identifier','FMUBUILDE
 
 ### Simulink Agentic Toolkit (MCP Server)
 
-The MATLAB MCP server enables AI-assisted Simulink model creation and manipulation. It is installed from the [simulink-agentic-toolkit](https://github.com/matlab/simulink-agentic-toolkit) repository.
+The MATLAB MCP server enables AI-assisted Simulink model creation and manipulation. It comes from the upstream repository [matlab/simulink-agentic-toolkit](https://github.com/matlab/simulink-agentic-toolkit) and is **not vendored into this repo** — it is installed on demand via a script so every developer (or AI agent) gets the same pinned version.
 
-**Installation:**
+**Install (one command):**
 
 ```bash
-# Clone into this project (already done — lives at simulink-agentic-toolkit/)
-git clone https://github.com/matlab/simulink-agentic-toolkit.git
+./scripts/install-simulink-toolkit.sh
 ```
 
-The `simulink-agentic-toolkit/` folder **must remain in the project** — the MCP server references `tools/tools.json` at runtime for Simulink model editing, reading, testing, and parameter resolution tools.
+This clones the toolkit into `simulink-agentic-toolkit/` at the pinned tag defined in the script (`TOOLKIT_REF`). The folder is listed in `.gitignore` so it never accidentally gets committed to this repo.
 
-**MCP Core Server binary:** Installed separately at a location like `/Users/<you>/dev/matlab/matlab-mcp-core-server`. See the [toolkit README](simulink-agentic-toolkit/README.md) for download instructions.
+**Update to a different version:**
+
+```bash
+# either edit TOOLKIT_REF in scripts/install-simulink-toolkit.sh
+# or override on the command line:
+TOOLKIT_REF=2026.05.06 ./scripts/install-simulink-toolkit.sh
+
+# force a clean re-install:
+FORCE=1 ./scripts/install-simulink-toolkit.sh
+```
+
+**MCP Core Server binary:** The toolkit itself does not ship the server binary. Install it separately (typical location: `~/.matlab/agentic-toolkits/bin/matlab-mcp-core-server`). See the upstream [toolkit README](https://github.com/matlab/simulink-agentic-toolkit#readme) for download instructions.
 
 **Configuration** (in `.kiro/settings/mcp.json`):
 
@@ -70,24 +80,28 @@ The `simulink-agentic-toolkit/` folder **must remain in the project** — the MC
 {
   "mcpServers": {
     "matlab": {
-      "command": "/path/to/matlab-mcp-core-server",
+      "command": "/absolute/path/to/matlab-mcp-core-server",
       "args": [
-        "--matlab-root=/Applications/MATLAB_R2025b.app",
-        "--extension-file=/path/to/simulink-agentic-toolkit/tools/tools.json"
+        "--matlab-session-mode=existing",
+        "--extension-file=/absolute/path/to/this/repo/simulink-agentic-toolkit/tools/tools.json",
+        "--disable-telemetry=true"
       ],
+      "env": {},
+      "disabled": false,
       "autoApprove": [
-        "evaluate_matlab_code",
-        "run_matlab_file",
-        "run_matlab_test_file",
-        "check_matlab_code",
         "detect_matlab_toolboxes",
-        "model_edit",
-        "model_overview"
+        "check_matlab_code",
+        "model_overview",
+        "model_read",
+        "model_query_params",
+        "model_resolve_params"
       ]
     }
   }
 }
 ```
+
+> **Pattern for other external MCP toolkits:** this repo hosts multiple MCP servers side by side. Servers we own live directly in the tree (e.g. `polarion-integration/`). Third-party servers pulled from GitHub follow the same pattern as above: add an `install-<name>.sh` script under `scripts/`, gitignore the destination folder, and document install + configuration in this README.
 
 ### Polarion ALM Integration (MCP Server)
 
@@ -170,12 +184,14 @@ Produces `TemperatureMonitoringSystem.fmu` — an FMI 2.0 Co-Simulation unit.
 │   └── settings/
 │       └── mcp.json                 # MCP server configuration
 ├── polarion-integration/
-│   └── polarion-mcp/               # Polarion MCP server source
-├── simulink-agentic-toolkit/       # Cloned from github.com/matlab/simulink-agentic-toolkit
-│   └── tools/                      # Runtime tool definitions (referenced by MCP server)
-│       └── tools.json              # Extension file for --extension-file arg
-├── fmu_export/                     # Generated FMU output
-└── README.md                       # This file
+│   └── polarion-mcp/                # Polarion MCP server source (in-tree, owned here)
+├── scripts/
+│   └── install-simulink-toolkit.sh  # Installs the Simulink Agentic Toolkit on demand
+├── simulink-agentic-toolkit/        # GITIGNORED — created by the install script above,
+│                                    # cloned from github.com/matlab/simulink-agentic-toolkit
+│                                    # Referenced at runtime via tools/tools.json
+├── fmu_export/                      # Generated FMU output
+└── README.md                        # This file
 ```
 
 ## License
