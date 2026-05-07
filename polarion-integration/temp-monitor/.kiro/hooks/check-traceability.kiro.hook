@@ -1,0 +1,13 @@
+{
+  "name": "Check Traceability Tags",
+  "version": "1.0.0",
+  "description": "On file save, verify that C source files contain proper ASPICE traceability doxygen tags (@implements, @trace). Flags missing traceability before code leaves the developer's machine.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["*.c"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check the saved file for ASPICE traceability compliance. Every non-static function must have a doxygen comment with @implements and @trace tags. If any are missing, list them and suggest the correct tags based on the module's SWE.2 and SWE.3 mapping."
+  }
+}

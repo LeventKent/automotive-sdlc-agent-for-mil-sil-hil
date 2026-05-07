@@ -1,0 +1,14 @@
+projects:
+  myproject:
+    id: TEMPMON004
+    name: TEMPMON004
+    description: Temp monitor demo
+    work_item_types:
+      - softwarerequirement
+      - systemrequirement
+      - systemtestcase
+    default_queries:
+      all_requirements: "type:(softwarerequirement OR systemrequirement)"
+      all_tests: "type:systemtestcase"
+
+display_fields: ["id", "title", "type", "status", "assignee"]

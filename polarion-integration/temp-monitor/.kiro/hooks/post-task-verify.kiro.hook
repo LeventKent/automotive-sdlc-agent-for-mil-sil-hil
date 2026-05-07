@@ -1,0 +1,12 @@
+{
+  "name": "Verify Polarion Sync After Task",
+  "version": "1.0.0",
+  "description": "After a spec task completes, verify that corresponding Polarion work items were created and traceability links are in place.",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The spec task just completed. Query Polarion to verify that the expected SWE.3 or SWE.4 work items were created and that traceability links to parent items exist. Report any gaps."
+  }
+}

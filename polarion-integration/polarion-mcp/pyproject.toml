@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=64.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-polarion"
+version = "0.2.0"
+description = "A FastMCP-based server for Polarion, fully compatible with Microsoft Copilot Studio."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    {name = "Mounir Merah", email="mounir.mohammedimerah@gmail.com"},
+]
+keywords = ["polarion", "mcp", "llm", "copilot-studio", "fastmcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "polarion>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "fastmcp>=2.10.6",
+    "pyyaml>=6.0.0",
+    "ruamel.yaml>=0.18.0",
+    "zeep>=4.0.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/mmerah/PolarionMcp"
+"Bug Tracker" = "https://github.com/mmerah/PolarionMcp/issues"
+
+[project.scripts]
+mcp-polarion = "mcp_server.main_stdio:main"
+
+[tool.setuptools.packages.find]
+include = ["mcp_server*", "lib*"]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.9.0",
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "types-PyYAML>=6.0.0",
+    "pytest>=7.4.0",
+    "pytest-asyncio>=1.0.0",
+]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+explicit_package_bases = true
+mypy_path = "."
+
+[[tool.mypy.overrides]]
+module = [
+    "polarion.*",
+    "uvicorn.*",
+    "fastmcp.*"
+]
+ignore_missing_imports = true
