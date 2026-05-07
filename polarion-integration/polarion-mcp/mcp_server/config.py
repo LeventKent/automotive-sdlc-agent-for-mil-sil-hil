@@ -64,10 +64,38 @@ class ConfigManager:
         """
         Derive the project root directory.
 
-        The MCP server lives at <project_root>/polarion-integration/polarion-mcp/mcp_server/,
-        so the project root is three levels up from this file's directory.
+        Resolution order:
+        1. POLARION_MCP_PROJECT_ROOT env var (explicit override)
+        2. Git repository root (via `git rev-parse --show-toplevel`)
+
+        Relative paths (e.g. POLARION_CONFIG_PATH) are resolved against this root,
+        so it must consistently point to the repository root.
         """
-        return Path(__file__).resolve().parent.parent.parent.parent
+        # 1. Explicit env var override
+        env_root = os.getenv("POLARION_MCP_PROJECT_ROOT")
+        if env_root:
+            return Path(env_root).resolve()
+
+        # 2. Git repository root
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                return Path(result.stdout.strip())
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+        raise RuntimeError(
+            "Cannot determine project root: not inside a git repository "
+            "and POLARION_MCP_PROJECT_ROOT is not set. "
+            "Set POLARION_MCP_PROJECT_ROOT to the repository root path."
+        )
 
     def _resolve_relative_path(self, path_str: str) -> Path:
         """
