@@ -27,6 +27,7 @@ A Model Context Protocol (MCP) server that provides seamless integration between
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   cd ./polarion-integration/polarion-mcp
    pip install -e .
    ```
 
