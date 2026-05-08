@@ -1,29 +1,35 @@
 # Analyze TRF Report
 
-Analyzes an ecu.test report file (.trf) and outputs a markdown table of failed, error, and inconclusive test steps.
+Analyzes an ecu.test report file (.trf) and outputs a markdown table of **all** test steps (by default), or a filtered subset.
 
 ## When to use
 
-- User wants to review test results or summarize failures
-- User says "analyze report", "show failures", "test feedback", "trf report"
-- After test execution, to understand what went wrong
+- User wants to review test results or summarize all steps
+- User says "analyze report", "show results", "show failures", "test feedback", "trf report"
+- After test execution, to understand the full test outcome
 
 ## Parameters
 
 | Argument | Flag | Default | Notes |
 |---|---|---|---|
 | Path to report | `--report-path` | *(required)* | Absolute path to the .trf file |
+| Filter results | `--filter` | *(none — all steps)* | Space-separated list of result types to include (e.g. `FAILED ERROR INCONCLUSIVE PASSED NONE`) |
 
 ## Running the script
 
 ```bash
-# Via adapter (handles local/remote routing):
-./scripts/ecu-test-adapter.sh report.py \
-  --report-path "C:\workspace\TestReports\my_test_2026-05-07\my_test.trf"
-
-# Direct local invocation:
+# All test steps (default):
 python scripts/report.py \
   --report-path "C:\workspace\TestReports\my_test_2026-05-07\my_test.trf"
+
+# Only failed/error/inconclusive steps:
+python scripts/report.py \
+  --report-path "C:\workspace\TestReports\my_test_2026-05-07\my_test.trf" \
+  --filter FAILED ERROR INCONCLUSIVE
+
+# Via adapter (handles local/remote routing):
+./scripts/ecu-test-adapter.sh report.py \
+  --report-path "/opt/ecu-test-workspace/TestReports/my_test.trf"
 ```
 
 ## Environment override
@@ -40,7 +46,7 @@ python scripts/report.py --report-path "C:\path\to\report.trf"
 1. Resolves the ecu.test ApiClient path (env var → Program Files → LocalAppData).
 2. Opens the .trf report using the ecu.test Object API.
 3. Recursively walks all test steps under each top-level package.
-4. Collects steps with result in FAILED, ERROR, or INCONCLUSIVE.
+4. Collects **all** test steps (or only those matching `--filter` if specified).
 5. Prints a markdown table with columns: Test Step, Result, Value, Expected Value, Comment.
 
 ## Output format
@@ -48,10 +54,12 @@ python scripts/report.py --report-path "C:\path\to\report.trf"
 ```
 | Test Step | Result | Value | Expected Value | Comment |
 |-----------|--------|-------|----------------|---------|
-| Package > Action > Step1 | FAILED | 45 km/h | > 50 km/h | Velocity not reached |
+| Package > Precondition > Step1 | PASSED | | | |
+| Package > Action > Step2 | PASSED | 52 km/h | > 50 km/h | |
+| Package > Action > Step3 | FAILED | 45 km/h | > 50 km/h | Velocity not reached |
 ```
 
-If no failed steps are found: `All test steps passed successfully.`
+If no steps are found: `No test steps found.`
 
 ## Saving the report
 
@@ -59,5 +67,6 @@ After generating the markdown table, save it to `ecu.test-integration/reports/` 
 
 ## Notes
 
-- The output keeps full hierarchical test step paths to make failures traceable.
+- The output keeps full hierarchical test step paths to make steps traceable.
 - Comments are escaped for markdown table safety.
+- To get the previous behavior (only failures), use `--filter FAILED ERROR INCONCLUSIVE`.

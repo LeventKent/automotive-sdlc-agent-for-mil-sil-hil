@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-report.py — Extract failed/error/inconclusive test steps from an ecu.test TRF report.
+report.py — Extract test steps from an ecu.test TRF report.
 
 Deployed to /opt/ecu-test-scripts/ on the remote EC2 instance.
 
+By default returns ALL test steps. Use --filter to show only specific result types.
+
 Usage:
     python3 report.py --report-path "/opt/ecu-test-workspace/Reports/test.trf"
+    python3 report.py --report-path "/opt/ecu-test-workspace/Reports/test.trf" --filter FAILED ERROR
 """
 
 from __future__ import annotations
@@ -19,8 +22,6 @@ import urllib.error
 from pathlib import Path
 
 from api_client_setup import get_api_client
-
-FAILED_RESULTS = {"FAILED", "ERROR", "INCONCLUSIVE"}
 
 
 def check_api_reachable(port: int = 5050) -> bool:
@@ -37,12 +38,13 @@ def check_api_reachable(port: int = 5050) -> bool:
     return False
 
 
-def collect_failed_steps(test_step, path: str, results: list[dict]) -> None:
+def collect_all_steps(test_step, path: str, results: list[dict], filter_results: set[str] | None = None) -> None:
+    """Recursively collect test steps. If filter_results is None, collect all steps."""
     label = test_step.GetLabel()
     result = test_step.GetResult()
     current_path = f"{path} > {label}" if path else label
 
-    if result in FAILED_RESULTS:
+    if filter_results is None or result in filter_results:
         value = ""
         expected = ""
         try:
@@ -62,12 +64,19 @@ def collect_failed_steps(test_step, path: str, results: list[dict]) -> None:
         })
 
     for child in test_step.GetTestSteps():
-        collect_failed_steps(child, current_path, results)
+        collect_all_steps(child, current_path, results, filter_results)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract failed test steps from a TRF report.")
+    parser = argparse.ArgumentParser(description="Extract test steps from a TRF report.")
     parser.add_argument("--report-path", required=True, help="Path to the .trf report file")
+    parser.add_argument(
+        "--filter",
+        nargs="*",
+        default=None,
+        help="Filter by result type (e.g. FAILED ERROR INCONCLUSIVE PASSED NONE). "
+             "If omitted, all test steps are returned.",
+    )
     args = parser.parse_args()
 
     report_path = Path(args.report_path)
@@ -79,31 +88,33 @@ def main():
         print("ERROR: ECU-TEST REST API not reachable at port 5050")
         sys.exit(1)
 
+    filter_results = set(args.filter) if args.filter else None
+
     try:
         api = get_api_client()
         report = api.ReportApi.OpenReport(str(report_path))
 
-        failed_steps: list[dict] = []
+        steps: list[dict] = []
         for package in report.GetTopLevelPackages():
             package_name = package.GetName()
             test_case = package.GetTestCase()
             for test_step in test_case.GetTestSteps():
-                collect_failed_steps(test_step, package_name, failed_steps)
+                collect_all_steps(test_step, package_name, steps, filter_results)
 
         report.Close()
     except Exception as e:
         print(f"ERROR: {e}")
         sys.exit(1)
 
-    if not failed_steps:
-        print("SUCCESS: All test steps passed")
+    if not steps:
+        print("SUCCESS: No test steps found matching criteria.")
     else:
-        # Output table then status
         lines = ["| Test Step | Result | Value | Expected | Comment |", "|---|---|---|---|---|"]
-        for row in failed_steps:
+        for row in steps:
             lines.append(f"| {row['path']} | {row['result']} | {row['value']} | {row['expectedValue']} | {row['comment']} |")
         print("\n".join(lines))
-        print(f"SUCCESS: Report analyzed, {len(failed_steps)} failed step(s) found")
+        filter_desc = f" (filter: {', '.join(sorted(filter_results))})" if filter_results else ""
+        print(f"SUCCESS: Report analyzed, {len(steps)} test step(s) found{filter_desc}")
     sys.exit(0)
 
 
