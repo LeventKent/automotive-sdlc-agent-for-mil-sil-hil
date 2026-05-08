@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TOOLING format-rev="3" prog-version="2026.2.0.177895+9688ee22e554-FeatureSet" xmlns="http://www.tracetronic.de/xml/ecu-test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.tracetronic.de/xml/ecu-test tooling.xsd">
+<TOOLING format-rev="3" prog-version="2026.1.1.175686+a96598cbdfd5" xmlns="http://www.tracetronic.de/xml/ecu-test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.tracetronic.de/xml/ecu-test tooling.xsd">
 	<TOOL-HOSTS>
 		<TOOL-HOST xsi:type="toolHost">
 			<URL xsi:type="string">local</URL>
@@ -20,7 +20,7 @@
 		</TOOL>
 	</TOOLS>
 	<PORTS>
-		<PORT format-rev="3" id="MDL01" toolId="FMI01" xsi:type="port">
+		<PORT format-rev="2" id="MDL01" toolId="FMI01" xsi:type="port">
 			<PORT-TYPE-ID format-rev="2" xsi:type="toolcaps">
 				<NAME xsi:type="string">MODELACCESS</NAME>
 			</PORT-TYPE-ID>
@@ -279,7 +279,7 @@
 						<NAME xsi:type="string">customStepSize</NAME>
 						<DISPLAY-NAME xsi:type="string">individuelle Kommunikationsschrittweite</DISPLAY-NAME>
 						<DISPLAY-LEVEL xsi:type="integer">1</DISPLAY-LEVEL>
-						<DESCRIPTION xsi:type="string">Individuelle Kommunikationsschrittweite festlegen (Angabe in Sekunden)</DESCRIPTION>
+						<DESCRIPTION xsi:type="string">individuelle Kommunikationsschrittweite festlegen (Angabe in Sekunden)</DESCRIPTION>
 						<TYPE xsi:type="string">float</TYPE>
 						<DEFAULT xsi:type="string">0.001</DEFAULT>
 						<READONLY xsi:type="boolean">False</READONLY>

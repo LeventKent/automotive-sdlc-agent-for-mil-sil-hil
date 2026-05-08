@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <MASTER-MAPPING format-rev="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
-                <ID xsi:type="string">Plant model.TemperatureOut</ID>
-                <DESCRIPTION xsi:type="string">TemperatureOut</DESCRIPTION>
-                <XACCESS format-rev="2" xsi:type="xaModelSignal">
-                        <MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
-                        <MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
-                        <VARIABLE-PATH xsi:type="string">TemperatureOut</VARIABLE-PATH>
-                </XACCESS>
-        </MAPPING-ITEM>
-        <MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
-                <ID xsi:type="string">Plant model.AlertOut</ID>
-                <DESCRIPTION xsi:type="string">AlertOut</DESCRIPTION>
-                <XACCESS format-rev="2" xsi:type="xaModelSignal">
-                        <MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
-                        <MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
-                        <VARIABLE-PATH xsi:type="string">AlertOut</VARIABLE-PATH>
-                </XACCESS>
-        </MAPPING-ITEM>
-        <MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
-                <ID xsi:type="string">Plant model.SensorStatus</ID>
-                <DESCRIPTION xsi:type="string">SensorStatus</DESCRIPTION>
-                <XACCESS format-rev="2" xsi:type="xaModelSignal">
-                        <MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
-                        <MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
-                        <VARIABLE-PATH xsi:type="string">SensorStatus</VARIABLE-PATH>
-                </XACCESS>
-        </MAPPING-ITEM>
-        <MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
-                <ID xsi:type="string">Plant model.time</ID>
-                <DESCRIPTION xsi:type="string">time</DESCRIPTION>
-                <XACCESS format-rev="2" xsi:type="xaModelSignal">
-                        <MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
-                        <MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
-                        <VARIABLE-PATH xsi:type="string">time</VARIABLE-PATH>
-                </XACCESS>
-        </MAPPING-ITEM>
+	<MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
+		<ID xsi:type="string">Plant model.AlertOut</ID>
+		<DESCRIPTION xsi:type="string">AlertOut</DESCRIPTION>
+		<XACCESS format-rev="2" xsi:type="xaModelSignal">
+			<MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
+			<MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
+			<VARIABLE-PATH xsi:type="string">AlertOut</VARIABLE-PATH>
+		</XACCESS>
+	</MAPPING-ITEM>
+	<MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
+		<ID xsi:type="string">Plant model.SensorStatus</ID>
+		<DESCRIPTION xsi:type="string">SensorStatus</DESCRIPTION>
+		<XACCESS format-rev="2" xsi:type="xaModelSignal">
+			<MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
+			<MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
+			<VARIABLE-PATH xsi:type="string">SensorStatus</VARIABLE-PATH>
+		</XACCESS>
+	</MAPPING-ITEM>
+	<MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
+		<ID xsi:type="string">Plant model.TemperatureOut</ID>
+		<DESCRIPTION xsi:type="string">TemperatureOut</DESCRIPTION>
+		<XACCESS format-rev="2" xsi:type="xaModelSignal">
+			<MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
+			<MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
+			<VARIABLE-PATH xsi:type="string">TemperatureOut</VARIABLE-PATH>
+		</XACCESS>
+	</MAPPING-ITEM>
+	<MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
+		<ID xsi:type="string">Plant model.time</ID>
+		<DESCRIPTION xsi:type="string">time</DESCRIPTION>
+		<XACCESS format-rev="2" xsi:type="xaModelSignal">
+			<MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
+			<MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
+			<VARIABLE-PATH xsi:type="string">time</VARIABLE-PATH>
+		</XACCESS>
+	</MAPPING-ITEM>
 </MASTER-MAPPING>

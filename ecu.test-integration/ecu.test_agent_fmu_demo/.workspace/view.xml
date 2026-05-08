@@ -169,7 +169,7 @@
 	</EXEC-PKG-LAYOUT>
 	<DV-TAB-POS-PERS>
 		<ELEMENT dkey="PKG___SELECTION">
-			<DVALUE xsi:type="integer">0</DVALUE>
+			<DVALUE xsi:type="integer">4</DVALUE>
 		</ELEMENT>
 	</DV-TAB-POS-PERS>
 	<VIEW-NAME xsi:type="string">PKG</VIEW-NAME>
