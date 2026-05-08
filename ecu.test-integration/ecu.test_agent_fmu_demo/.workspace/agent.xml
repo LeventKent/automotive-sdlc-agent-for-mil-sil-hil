@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AGENT-SETTINGS format-rev="3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<URL xsi:type="string">http://ttdrsvs0741:8020</URL>
+	<API-TOKEN xsi:type="string">0TrqkwCn+smxhqKiBZXaKoMlcaGzQts9xCKs6MBf63Gjpkhhj2Avh+QvIytZPEK5jfsljDRRygB1
+uRzfWkhh1g==</API-TOKEN>
+	<PROXY-SETTINGS xsi:type="tmsProxySettings">
+		<FLAG_PROXY_SELECTION xsi:type="integer">1</FLAG_PROXY_SELECTION>
+	</PROXY-SETTINGS>
+	<USER-PROMPT xsi:type="string">prefer wait until instead of loops</USER-PROMPT>
+</AGENT-SETTINGS>
