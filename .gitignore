@@ -145,3 +145,9 @@ templates/
 .dsr
 
 notebooks/evaluation_results*
+
+# ECU-TEST remote config (contains SSH credentials)
+.ecu-test-remote.json
+
+# Matlab
+simulink-agentic-toolkit/

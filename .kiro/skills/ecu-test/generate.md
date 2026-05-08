@@ -20,6 +20,14 @@ Configures a TCF in a running ECU-TEST instance and then generates a test packag
 ## Running the script
 
 ```bash
+# Via adapter (handles local/remote routing):
+./scripts/ecu-test-adapter.sh generate.py \
+  --tcf "C:\workspace\Configurations\ElectricVehicle.tcf" \
+  --package "C:\workspace\Packages\my_test.pkg" \
+  --port 5050 \
+  --timeout 120
+
+# Direct local invocation:
 python scripts/generate.py \
   --tcf "C:\workspace\Configurations\ElectricVehicle.tcf" \
   --package "C:\workspace\Packages\my_test.pkg" \

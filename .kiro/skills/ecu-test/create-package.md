@@ -20,6 +20,16 @@ Creates an ecu.test package (.pkg) from explicit precondition, action, and postc
 ## Running the script
 
 ```bash
+# Via adapter (handles local/remote routing):
+./scripts/ecu-test-adapter.sh create_package.py \
+  --pre-step "Set the vehicle state to 'D' (driving)." \
+  --pre-step "Set vehicle traction standby to 'on'." \
+  --action-step "Press the accelerator pedal to 50%%." \
+  --action-step "Verify the vehicle reaches more than 50 km/h within 9 seconds." \
+  --post-step "Set vehicle traction standby to 'off'." \
+  --output "C:\workspace\Packages\my_test.pkg"
+
+# Direct local invocation:
 python scripts/create_package.py \
   --pre-step "Set the vehicle state to 'D' (driving)." \
   --pre-step "Set vehicle traction standby to 'on'." \

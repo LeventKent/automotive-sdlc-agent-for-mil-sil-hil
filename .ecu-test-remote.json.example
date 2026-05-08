@@ -1,0 +1,11 @@
+{
+  "mode": "remote",
+  "hostname": "ec2-xx-xx-xx-xx.compute-1.amazonaws.com",
+  "username": "ubuntu",
+  "key_path": "~/.ssh/ecu-test-key.pem",
+  "local_workspace": "/Users/dev/project/workspace",
+  "remote_workspace": "/opt/ecu-test-workspace",
+  "ssh_timeout": 30,
+  "exec_timeout": 600,
+  "transfer_timeout": 300
+}

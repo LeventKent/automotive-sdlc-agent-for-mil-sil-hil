@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Provisions an Ubuntu 22.04 EC2 instance with ECU_TEST installed,
+  Python 3.11 configured, and workspace directories created for
+  remote ecu.test execution.
+
+Parameters:
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an existing EC2 key pair for SSH access
+
+  AllowedSSHCidr:
+    Type: String
+    Description: CIDR range allowed for inbound SSH (e.g. 203.0.113.0/32)
+    AllowedPattern: '(\d{1,3}\.){3}\d{1,3}/\d{1,2}'
+    ConstraintDescription: Must be a valid CIDR block (e.g. 203.0.113.0/32)
+
+  InstanceType:
+    Type: String
+    Default: t3.large
+    Description: EC2 instance type (minimum 2 vCPU, 8 GiB RAM)
+
+  EcuTestDebUrl:
+    Type: String
+    Description: URL to the ECU_TEST .deb package for download and installation
+
+Mappings:
+  RegionAMI:
+    us-east-1:
+      AMI: ami-0f9de6e2d2f067fca
+    us-east-2:
+      AMI: ami-0ccabb5f82d4c9af5
+    us-west-1:
+      AMI: ami-0cbd40f694b804622
+    us-west-2:
+      AMI: ami-03c983f9003cb9cd1
+    eu-west-1:
+      AMI: ami-0694d931cee176e7d
+    eu-central-1:
+      AMI: ami-0faab6bdbac9486fb
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ECU-TEST remote execution instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AllowedSSHCidr
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      ImageId: !FindInMap [RegionAMI, !Ref 'AWS::Region', AMI]
+      SecurityGroupIds:
+        - !GetAtt SecurityGroup.GroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > /var/log/ecu-test-init.log 2>&1
+
+          apt-get update
+          apt-get install -y python3-pip python3-setuptools software-properties-common
+
+          # Install Python 3.11 and requests
+          add-apt-repository -y ppa:deadsnakes/ppa
+          apt-get update
+          apt-get install -y python3.11 python3.11-venv python3.11-distutils
+          python3.11 -m ensurepip --upgrade
+          python3.11 -m pip install requests
+
+          # Download and install ECU_TEST .deb package
+          curl -fSL -o /tmp/ecu-test.deb '${EcuTestDebUrl}'
+          dpkg -i /tmp/ecu-test.deb || true
+          apt-get install -f -y
+          rm -f /tmp/ecu-test.deb
+
+          # Create directories
+          mkdir -p /opt/ecu-test-scripts
+          chmod 755 /opt/ecu-test-scripts
+
+          mkdir -p /opt/ecu-test-workspace
+          chmod 777 /opt/ecu-test-workspace
+
+          echo "ECU-TEST init complete" >> /var/log/ecu-test-init.log
+
+Outputs:
+  InstancePublicIp:
+    Description: Public IPv4 address of the ECU-TEST instance
+    Value: !GetAtt EC2Instance.PublicIp
+
+  InstancePublicDns:
+    Description: Public DNS hostname of the ECU-TEST instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+
+  InstanceId:
+    Description: EC2 instance ID
+    Value: !Ref EC2Instance

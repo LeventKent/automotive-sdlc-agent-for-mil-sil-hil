@@ -41,7 +41,11 @@
         "check_matlab_code",
         "detect_matlab_toolboxes",
         "model_edit",
-        "model_overview"
+        "model_overview",
+        "model_read",
+        "model_query_params",
+        "model_resolve_params",
+        "model_test"
       ]
     }
   }

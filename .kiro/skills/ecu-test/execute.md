@@ -22,6 +22,16 @@ Loads a TBC and TCF configuration in a running ECU-TEST instance, then executes 
 ## Running the script
 
 ```bash
+# Via adapter (handles local/remote routing):
+./scripts/ecu-test-adapter.sh execute.py \
+  --test-case "C:\workspace\Packages\my_test.pkg" \
+  --tbc "C:\workspace\Configurations\HiL_157.tbc" \
+  --tcf "C:\workspace\Configurations\ElectricVehicle.tcf" \
+  --port 5050 \
+  --timeout 120 \
+  --exec-timeout 600
+
+# Direct local invocation:
 python scripts/execute.py \
   --test-case "C:\workspace\Packages\my_test.pkg" \
   --tbc "C:\workspace\Configurations\HiL_157.tbc" \

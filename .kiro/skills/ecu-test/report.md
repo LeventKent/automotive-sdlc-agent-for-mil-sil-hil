@@ -17,6 +17,11 @@ Analyzes an ecu.test report file (.trf) and outputs a markdown table of failed, 
 ## Running the script
 
 ```bash
+# Via adapter (handles local/remote routing):
+./scripts/ecu-test-adapter.sh report.py \
+  --report-path "C:\workspace\TestReports\my_test_2026-05-07\my_test.trf"
+
+# Direct local invocation:
 python scripts/report.py \
   --report-path "C:\workspace\TestReports\my_test_2026-05-07\my_test.trf"
 ```

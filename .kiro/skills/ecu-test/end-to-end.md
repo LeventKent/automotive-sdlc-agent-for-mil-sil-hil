@@ -19,10 +19,10 @@ Execute the following steps **in order**:
 ### Step 1 — Create the package specification
 
 1. Read the user's requirement and decompose it into `precondition`, `action`, and `postcondition` step lists following the [decomposition rules](create-package.md).
-2. Run the create-package script:
+2. Run the create-package script via the adapter:
 
 ```bash
-python scripts/create_package.py \
+./scripts/ecu-test-adapter.sh create_package.py \
   --pre-step "..." \
   --action-step "..." \
   --post-step "..." \
@@ -33,10 +33,10 @@ python scripts/create_package.py \
 
 ### Step 2 — Configure TCF and generate the test script
 
-1. Run the generate script with the **absolute** TCF path and the **absolute** package path from Step 1:
+1. Run the generate script via the adapter with the **absolute** TCF path and the **absolute** package path from Step 1:
 
 ```bash
-python scripts/generate.py \
+./scripts/ecu-test-adapter.sh generate.py \
   --tcf "<ABSOLUTE path to the .tcf file>" \
   --package "<ABSOLUTE path to the .pkg file from Step 1>"
 ```
@@ -48,7 +48,7 @@ python scripts/generate.py \
 Only perform this step if the user wants to run/execute the test.
 
 ```bash
-python scripts/execute.py \
+./scripts/ecu-test-adapter.sh execute.py \
   --test-case "<ABSOLUTE path to the .pkg file from Step 1>" \
   --tbc "<ABSOLUTE path to the .tbc file>" \
   --tcf "<ABSOLUTE path to the .tcf file>"
@@ -59,7 +59,7 @@ python scripts/execute.py \
 After execution, analyze the TRF report:
 
 ```bash
-python scripts/report.py \
+./scripts/ecu-test-adapter.sh report.py \
   --report-path "<ABSOLUTE path to the .trf file from the test report directory>"
 ```
 
@@ -71,7 +71,7 @@ For a requirement:
 
 **Step 1:**
 ```bash
-python scripts/create_package.py \
+./scripts/ecu-test-adapter.sh create_package.py \
   --pre-step "Set the vehicle state to 'D' (driving)." \
   --pre-step "Set vehicle traction standby to 'on'." \
   --action-step "Press the accelerator pedal to 50%%." \
@@ -86,14 +86,14 @@ python scripts/create_package.py \
 
 **Step 2:**
 ```bash
-python scripts/generate.py \
+./scripts/ecu-test-adapter.sh generate.py \
   --tcf "C:\workspace\Configurations\ElectricVehicle.tcf" \
   --package "C:\workspace\Packages\ev_traction_test.pkg"
 ```
 
 **Step 3:**
 ```bash
-python scripts/execute.py \
+./scripts/ecu-test-adapter.sh execute.py \
   --test-case "C:\workspace\Packages\ev_traction_test.pkg" \
   --tbc "C:\workspace\Configurations\HiL_157.tbc" \
   --tcf "C:\workspace\Configurations\ElectricVehicle.tcf"
@@ -101,7 +101,7 @@ python scripts/execute.py \
 
 **Step 4:**
 ```bash
-python scripts/report.py \
+./scripts/ecu-test-adapter.sh report.py \
   --report-path "C:\workspace\TestReports\ev_traction_test_2026-05-07\ev_traction_test.trf"
 ```
 
@@ -114,3 +114,39 @@ python scripts/report.py \
 - `postcondition`: only cleanup or end-state restoration if the test changes system state.
 - Omit any category that is not needed. Empty lists are valid.
 - If the requirement is ambiguous, ask the user before proceeding.
+
+## Remote Execution Notes
+
+When running in remote mode against the EC2 instance:
+
+### FMU Generation from MATLAB/Simulink
+
+Before tests can run, the FMU must be exported from the Simulink model. Use the MATLAB MCP tools:
+
+```matlab
+exportToFMU('TemperatureMonitoringSystem', ...
+    'FMIVersion', '2.0', ...
+    'FMUType', 'CS', ...
+    'CreateModelReport', 'on', ...
+    'SaveDirectory', fullfile(pwd, 'ecu.test-integration/ecu.test_agent_fmu_demo/fmu'));
+```
+
+The exported FMU contains C sources but only Windows/macOS binaries. It must be cross-compiled for Linux on the EC2 instance (see below).
+
+### Pre-flight checklist
+1. FMU exported from MATLAB/Simulink and placed in the workspace `fmu/` folder
+2. FMU cross-compiled on EC2 to add `binaries/linux64/*.so` (see SKILL.md "FMU Cross-Compilation" section)
+3. ECU-TEST must be started with `--workspaceDir=/opt/ecu-test-workspace`
+4. The workspace (`.workspace/`, `Configurations/`, `Parameters/`, `fmu/`, `Packages/`) must be uploaded
+5. `ECU_TEST_API_CLIENT_PATH=/opt/ecu.test-2026.1/Templates/ApiClient` must be set
+
+### Path conventions (remote)
+- `--tcf` and `--tbc`: use **filenames only** (e.g., `fmu.tcf`, `fmu.tbc`)
+- `--test-case`: use **absolute path** (e.g., `/opt/ecu-test-workspace/Packages/TM-601.pkg`)
+- `--output` for create_package: use **relative path from workspace** (e.g., `Packages/TM-601.pkg`)
+- `--report-path`: use **absolute path** to the `.trf` file
+
+### AI Generation
+- Requires `.workspace/agent.xml` with a reachable URL and API token
+- The public endpoint `https://agent.tracetronic.ai/` works from EC2
+- Internal endpoints (e.g., `http://ttdrsvs0741:8020`) are NOT reachable from EC2

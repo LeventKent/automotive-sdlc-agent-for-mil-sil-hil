@@ -19,6 +19,13 @@ Launches the ECU-TEST application on Windows and confirms it is reachable via it
 ## Running the script
 
 ```bash
+# Via adapter (handles local/remote routing):
+./scripts/ecu-test-adapter.sh start.py \
+  --exe-path "/opt/ecu.test/bin/ecu-test" \
+  --port 5050 \
+  --timeout 60
+
+# Direct local invocation:
 python scripts/start.py \
   --exe-path "C:\Program Files\ecu.test 2026.2\ecu.test.exe" \
   --port 5050 \
@@ -37,3 +44,4 @@ python scripts/start.py \
 - If ECU-TEST is already running, the script detects this immediately and reports success.
 - The ECU-TEST process is launched detached — it continues running after the script exits.
 - This capability only starts ECU-TEST. Configuration and execution are separate capabilities.
+- **Remote mode**: The adapter checks if ECU-TEST is already running via SSH before invoking start.py. If running, it skips the start and reports success immediately.

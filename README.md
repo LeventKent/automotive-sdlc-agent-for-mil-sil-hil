@@ -167,16 +167,79 @@ Produces `TemperatureMonitoringSystem.fmu` — an FMI 2.0 Co-Simulation unit.
 
 ```
 ├── .kiro/
-│   └── settings/
-│       └── mcp.json                 # MCP server configuration
+│   ├── settings/
+│   │   └── mcp.json                 # MCP server configuration
+│   ├── skills/
+│   │   └── ecu-test/                # ECU-TEST automation skill
+│   │       ├── SKILL.md             # Skill definition and remote setup guide
+│   │       ├── scripts/
+│   │       │   ├── ecu-test-adapter.sh   # Adapter (local/remote routing)
+│   │       │   ├── resolve_config.py     # Config resolution helper
+│   │       │   ├── adapter_logic.py      # Pure logic (path translation, validation)
+│   │       │   ├── remote/               # Linux-adapted scripts for EC2
+│   │       │   └── *.py                  # Local scripts
+│   │       └── *.md                 # Capability guides
+│   └── specs/
+│       └── remote-ecu-test-execution/   # Spec-driven design docs
+├── ecu.test-integration/
+│   ├── ecu.test_agent_fmu_demo/     # ECU-TEST workspace
+│   │   ├── .workspace/             # Workspace config (agent.xml, etc.)
+│   │   ├── Configurations/         # TBC and TCF files
+│   │   ├── Parameters/FMU/         # XAM signal mapping
+│   │   ├── fmu/                    # FMU model files
+│   │   └── Packages/               # Generated test packages
+│   └── requirements/               # Test case requirements (TM-601..TM-605)
+├── infra/
+│   └── ecu-test-ec2.yaml           # CloudFormation template for remote EC2
 ├── polarion-integration/
 │   └── polarion-mcp/               # Polarion MCP server source
 ├── simulink-agentic-toolkit/       # Cloned from github.com/matlab/simulink-agentic-toolkit
-│   └── tools/                      # Runtime tool definitions (referenced by MCP server)
-│       └── tools.json              # Extension file for --extension-file arg
-├── fmu_export/                     # Generated FMU output
+├── tests/
+│   └── unit/
+│       └── test_adapter_logic.py   # Property-based + unit tests
+├── .ecu-test-remote.json.example   # Remote config template
 └── README.md                       # This file
 ```
+
+## Remote ECU-TEST Execution
+
+The project supports running ecu.test on a remote EC2 instance via SSH. This decouples the test execution environment from the development machine.
+
+### Architecture
+
+```
+Developer Machine (Kiro)          AWS EC2 (Ubuntu 22.04, t3.large)
+┌─────────────────────┐           ┌──────────────────────────────┐
+│ ecu-test-adapter.sh │──── SSH ──│ /opt/ecu-test-scripts/*.py   │
+│ .ecu-test-remote.json│──── SCP ──│ /opt/ecu-test-workspace/     │
+└─────────────────────┘           │ /usr/bin/ecu.test (2026.1)   │
+                                  │ REST API :5050               │
+                                  └──────────────────────────────┘
+```
+
+### Key Operational Details
+
+1. **ECU-TEST version**: Use **2026.1.x** (not 2026.2). The license only covers 2026.1.
+   - Download: `https://files.tracetronic.de/d/69f0752af57b469d9a1a/` → `2026.1.3/ecu.test-2026.1.3_runner.deb`
+
+2. **License**: `TRACET_LICENSE=2060@license01.tracetronic.de@AWS@cz47cbjc` must be set in the environment before starting ECU-TEST.
+
+3. **FMU cross-compilation**: FMUs from MATLAB contain only Windows/macOS binaries. The C sources inside the FMU must be compiled to `linux64/*.so` on the EC2 instance using `gcc` and FMI2 headers from the modelica/fmi-standard repository.
+
+4. **Workspace upload**: The entire `ecu.test_agent_fmu_demo/` workspace (`.workspace/`, `Configurations/`, `Parameters/`, `fmu/`) must be uploaded to `/opt/ecu-test-workspace/` on the remote.
+
+5. **ECU-TEST start command**: Must include `--workspaceDir=/opt/ecu-test-workspace` to load the workspace configuration, TBC/TCF, and XAM mappings.
+
+6. **Path conventions**:
+   - TCF/TBC: use filenames only (`fmu.tcf`, `fmu.tbc`) — ECU-TEST resolves from workspace
+   - Test case packages: use absolute paths (`/opt/ecu-test-workspace/Packages/TM-601.pkg`)
+   - Package output: use relative paths from workspace (`Packages/TM-601.pkg`)
+
+7. **ApiClient path**: Remote scripts need `ECU_TEST_API_CLIENT_PATH=/opt/ecu.test-2026.1/Templates/ApiClient`
+
+8. **AI Agent**: The `.workspace/agent.xml` must contain a reachable agent URL (e.g., `https://agent.tracetronic.ai/`) for `GenerateViaAi()` to work.
+
+See [SKILL.md](.kiro/skills/ecu-test/SKILL.md) for full setup instructions.
 
 ## License
 
