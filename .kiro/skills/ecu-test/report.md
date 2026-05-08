@@ -53,6 +53,10 @@ python scripts/report.py --report-path "C:\path\to\report.trf"
 
 If no failed steps are found: `All test steps passed successfully.`
 
+## Saving the report
+
+After generating the markdown table, save it to `ecu.test-integration/reports/` as a `.md` file named after the test (e.g. `TM-601-report.md`). Do not store raw `.trf` files locally — only the markdown summary belongs in this directory.
+
 ## Notes
 
 - The output keeps full hierarchical test step paths to make failures traceable.

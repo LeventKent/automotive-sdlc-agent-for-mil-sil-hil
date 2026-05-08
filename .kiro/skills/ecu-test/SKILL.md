@@ -82,6 +82,7 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 4. **Decompose requirements carefully** — split into precondition, action, postcondition. Keep it minimal.
 5. **Check reports after execution** — use the report capability to understand failures.
 
+
 ## Capabilities
 
 | Capability | Script | Guide |
