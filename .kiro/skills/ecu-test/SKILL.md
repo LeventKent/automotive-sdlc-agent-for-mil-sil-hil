@@ -81,6 +81,8 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 3. **One capability at a time** — ECU-TEST processes requests sequentially; wait for one to finish before starting the next.
 4. **Decompose requirements carefully** — split into precondition, action, postcondition. Keep it minimal.
 5. **Check reports after execution** — use the report capability to understand failures.
+6. **Do NOT include "Start the simulation" steps** — the TBC has `AutoSimulation=True` and `START-OPTION=1`, so the FMI tool and simulation start automatically when the configuration is loaded. Adding a "Start the simulation" action step will always fail with "No relevant signal or function found".
+7. **Configuration must be started before execution** — the `execute.py` script handles this automatically by calling `start_configuration()` with the TCF/TBC before running the test. If calling the API directly, ensure `PUT /api/v2/configuration` is called first.
 
 
 ## Capabilities
@@ -215,7 +217,7 @@ ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP "mkdir -p /opt/ecu-test-works
 
 ### FMU Cross-Compilation for Linux
 
-The FMU must first be generated from the Simulink model using MATLAB (via the MATLAB MCP tools or manually):
+#### Option A: With Simulink Coder/Compiler (if licensed)
 
 ```matlab
 exportToFMU('TemperatureMonitoringSystem', ...
@@ -225,37 +227,55 @@ exportToFMU('TemperatureMonitoringSystem', ...
     'SaveDirectory', fullfile(pwd, 'ecu.test-integration/ecu.test_agent_fmu_demo/fmu'));
 ```
 
-FMUs exported from MATLAB/Simulink on macOS or Windows contain only `win64` and/or `aarch64-darwin` binaries. The remote Linux EC2 instance needs a `linux64` shared library. The FMU includes C sources that must be compiled on the target:
+Then cross-compile on the remote instance (the exported FMU contains C sources):
 
 ```bash
 ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP "
-  # Install build tools (if not already present)
   sudo apt-get install -y gcc unzip zip
-
-  # Download FMI2 headers
-  mkdir -p /tmp/fmi2
-  curl -sL https://raw.githubusercontent.com/modelica/fmi-standard/v2.0.4/headers/fmi2Functions.h -o /tmp/fmi2/fmi2Functions.h
-  curl -sL https://raw.githubusercontent.com/modelica/fmi-standard/v2.0.4/headers/fmi2FunctionTypes.h -o /tmp/fmi2/fmi2FunctionTypes.h
-  curl -sL https://raw.githubusercontent.com/modelica/fmi-standard/v2.0.4/headers/fmi2TypesPlatform.h -o /tmp/fmi2/fmi2TypesPlatform.h
-
-  # Extract, compile, repackage
   cd /opt/ecu-test-workspace/fmu
-  FMU_NAME=TemperatureMonitoringSystem_win64
   mkdir -p /tmp/fmu_build
-  unzip -o \${FMU_NAME}.fmu -d /tmp/fmu_build
+  unzip -o TemperatureMonitoringSystem.fmu -d /tmp/fmu_build
   cd /tmp/fmu_build/sources
-  gcc -shared -fPIC -o TemperatureMonitoringSystem.so \
-    TemperatureMonitoringSystem.c TemperatureMonitoringSystem_data.c \
-    TemperatureMonitoringSystem_fmu.c RTWCG_FMU_util.c rt_nonfinite.c \
-    -I. -I/tmp/fmi2 -lm
+  gcc -shared -fPIC -o TemperatureMonitoringSystem.so *.c -I. -lm
   mkdir -p /tmp/fmu_build/binaries/linux64
   cp TemperatureMonitoringSystem.so /tmp/fmu_build/binaries/linux64/
   cd /tmp/fmu_build
-  zip -r /opt/ecu-test-workspace/fmu/\${FMU_NAME}.fmu \
-    modelDescription.xml binaries/ sources/ model.png documentation/
-  rm -rf /tmp/fmu_build /tmp/fmi2
+  zip -r /opt/ecu-test-workspace/fmu/TemperatureMonitoringSystem.fmu \
+    modelDescription.xml binaries/ sources/
+  rm -rf /tmp/fmu_build
 "
 ```
+
+#### Option B: Without Simulink Coder (hand-coded FMU)
+
+If only base MATLAB + Simulink are licensed, use the build script:
+
+```bash
+# Upload and run on remote:
+scp -i ~/.ssh/ecu-test-key.pem \
+  ecu.test-integration/ecu.test_agent_fmu_demo/fmu/build_fmu.py \
+  ubuntu@$INSTANCE_IP:/opt/ecu-test-workspace/fmu/
+
+ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP \
+  "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
+```
+
+Or generate source-only locally and compile on remote:
+```bash
+# Local: generate FMU with source (no binary)
+python ecu.test-integration/ecu.test_agent_fmu_demo/fmu/build_fmu.py --source-only
+
+# Upload to remote
+scp -i ~/.ssh/ecu-test-key.pem \
+  ecu.test-integration/ecu.test_agent_fmu_demo/fmu/TemperatureMonitoringSystem.fmu \
+  ubuntu@$INSTANCE_IP:/opt/ecu-test-workspace/fmu/
+
+# Compile on remote
+ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP \
+  "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
+```
+
+> **Important:** The FMU shared library must export ALL FMI2 functions (even as stubs) because ECU-TEST's `fmpy` resolves all symbols regardless of capability flags. See `build_fmu.py` for the complete list.
 
 ### Starting ECU-TEST on the Remote Instance
 

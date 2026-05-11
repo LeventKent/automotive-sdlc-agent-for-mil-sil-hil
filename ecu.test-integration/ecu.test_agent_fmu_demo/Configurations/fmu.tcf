@@ -22,7 +22,7 @@
 			<DVALUE format-rev="1" xsi:type="modelData">
 				<MODEL-DATA-SOURCE xsi:type="integer">0</MODEL-DATA-SOURCE>
 				<MODEL-ACCESS-PORT xsi:type="string">MDL01</MODEL-ACCESS-PORT>
-				<MODEL-FILE xsi:type="string">PlantModel.fmu</MODEL-FILE>
+				<MODEL-FILE xsi:type="string">TemperatureMonitoringSystem.fmu</MODEL-FILE>
 				<MODEL-POSITION xsi:type="integer">1</MODEL-POSITION>
 			</DVALUE>
 		</DATA>

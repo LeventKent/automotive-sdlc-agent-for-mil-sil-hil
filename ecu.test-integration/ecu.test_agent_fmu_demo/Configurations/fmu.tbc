@@ -10,7 +10,7 @@
 		<TOOL id="FMI01" xsi:type="tool">
 			<TOOL-HOST xsi:type="string">local</TOOL-HOST>
 			<TOOL-NAME xsi:type="string">FMI</TOOL-NAME>
-			<START-OPTION xsi:type="integer">0</START-OPTION>
+			<START-OPTION xsi:type="integer">1</START-OPTION>
 			<START-PRIORITY xsi:type="integer">0</START-PRIORITY>
 			<SETTINGS xsi:type="dynamicPropertySet">
 				<PROPERTY format-rev="1" name="fmuRootDir" propertyType="string" readonly="false" xsi:type="_property">
@@ -24,7 +24,7 @@
 			<PORT-TYPE-ID format-rev="2" xsi:type="toolcaps">
 				<NAME xsi:type="string">MODELACCESS</NAME>
 			</PORT-TYPE-ID>
-			<AUTOSTART xsi:type="integer">0</AUTOSTART>
+			<AUTOSTART xsi:type="integer">1</AUTOSTART>
 			<SETTINGS xsi:type="dynamicPropertySet">
 				<PROPERTY format-rev="1" name="ModelFile" propertyType="string" readonly="false" xsi:type="_property">
 					<VALUE xsi:type="string">ref:SUT</VALUE>
