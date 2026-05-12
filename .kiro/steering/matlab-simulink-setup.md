@@ -5,6 +5,17 @@ fileMatchPattern: "matlab-models/**"
 
 # MATLAB/Simulink Setup
 
+## Workspace Path for MATLAB MCP Tools
+
+When calling MATLAB MCP tools that require `project_path`, resolve the absolute path to the `matlab-models/` directory in this workspace at runtime. Do NOT hardcode paths — use the shell (`pwd`) or equivalent to determine the workspace root, then append `matlab-models`.
+
+Example pattern:
+```
+project_path = <workspace_root>/matlab-models
+```
+
+If the first MATLAB MCP call fails with "path validation failed: resource not found", run `pwd` in the terminal to discover the actual workspace root and retry.
+
 ## MATLAB MCP Core Server
 
 The MATLAB MCP Core Server binary should be at:

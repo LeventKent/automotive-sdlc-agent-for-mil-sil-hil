@@ -1,0 +1,1 @@
+Based on the requirements in ecu.test-integration/requirements/, create a Simulink model that satisfies them, export it as an FMU, deploy it to the remote ECU-TEST instance, then create test packages from those same requirements, generate test scripts, execute all tests, and give me a summary report.

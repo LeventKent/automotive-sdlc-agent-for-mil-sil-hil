@@ -5,6 +5,5 @@
 	<PROXY-SETTINGS xsi:type="tmsProxySettings">
 		<FLAG_PROXY_SELECTION xsi:type="integer">1</FLAG_PROXY_SELECTION>
 	</PROXY-SETTINGS>
-	<USER-PROMPT xsi:type="string">* if you have to start simulations, the teststep can return None, which is ok
-* dont use variables, for any comparison, use the fixed value instead</USER-PROMPT>
+	<USER-PROMPT xsi:type="string">* if you have to start simulations, the teststep can return None, which is ok</USER-PROMPT>
 </AGENT-SETTINGS>

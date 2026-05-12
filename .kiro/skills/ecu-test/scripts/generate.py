@@ -81,6 +81,90 @@ def generate_package(package_file_path: str | Path) -> bool:
     return overall_result
 
 
+def add_undefined_variables_for_assignments(package_file_path: str|Path) -> bool:
+    """
+    Walk all test steps in the package and add an <Undefined> variable for every
+    variable name a step assigns to. Existing variables are left untouched.
+
+    Sources of assigned names:
+      - GetSaveInVariableName()           (most TsRead/TsCalculation/dialogs/...)
+      - GetSaveInVariableNames()          (TsBusMonitoring* multi-slot steps)
+      - GetReturns()[i].GetSaveInVariableName()   (TsKeyword, TsAXSCall)
+    """
+    if isinstance(package_file_path, str):
+        package_file_path = Path(package_file_path)
+
+    if not package_file_path.exists():
+        print(f"ERROR: PackagePath {package_file_path!r} does not exist!")
+        return False
+
+    api = get_api_client()
+    package = api.PackageApi.OpenPackage(filename=str(package_file_path))
+    if package is None:
+        return False
+
+    assigned: set[str] = set()
+
+    def collect_from_step(ts: TestStep) -> None:
+        getter = getattr(ts, 'GetSaveInVariableName', None)
+        if callable(getter):
+            try:
+                name = getter()
+                if name:
+                    assigned.add(name)
+            except TypeError:
+                # signature requires an index (e.g. TsBusMonitoring) — handled below
+                pass
+
+        multi = getattr(ts, 'GetSaveInVariableNames', None)
+        if callable(multi):
+            try:
+                for n in multi() or []:
+                    if n:
+                        assigned.add(n)
+            except Exception:
+                pass
+
+        returns_getter = getattr(ts, 'GetReturns', None)
+        if callable(returns_getter):
+            try:
+                for ret in returns_getter() or []:
+                    ret_getter = getattr(ret, 'GetSaveInVariableName', None)
+                    if callable(ret_getter):
+                        n = ret_getter()
+                        if n:
+                            assigned.add(n)
+            except Exception:
+                pass
+
+        children_getter = getattr(ts, 'GetTestSteps', None)
+        if callable(children_getter):
+            try:
+                for child in children_getter() or []:
+                    collect_from_step(child)
+            except Exception:
+                pass
+
+    print(f"Scanning {package_file_path} for variable assignments...", flush=True)
+    for ts in package.GetTestSteps():
+        collect_from_step(ts)
+
+    added = 0
+    for name in sorted(assigned):
+        if package.GetVariable(name) is not None:
+            continue
+        try:
+            var = api.PackageApi.VariableApi.CreateVariable(name)
+            package.AddVariable(var)
+            added += 1
+            print(f"  + variable {name!r}", flush=True)
+        except Exception as e:
+            print(f"ERROR adding variable {name!r}: {type(e).__name__}: {e}", flush=True)
+
+    package.Save()
+    print(f"Added {added} variable(s) to {package_file_path}", flush=True)
+    return True
+
 def run_workflow(
     tcf: str,
     package: str,
@@ -121,6 +205,10 @@ def run_workflow(
     ok = generate_package(package)
     if not ok:
         return WorkflowResult(success=False, message=f"Package generation failed for '{package}'.")
+
+    if not add_undefined_variables_for_assignments(package):
+        return WorkflowResult(success=False, message=f"Adding assigned variables failed for '{package}'.")
+
 
     return WorkflowResult(success=True, message=f"TCF loaded and package '{package}' generated successfully.")
 

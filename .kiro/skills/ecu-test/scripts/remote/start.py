@@ -7,11 +7,13 @@ Deployed to /opt/ecu-test-scripts/ on the remote EC2 instance.
 Usage:
     python3 start.py
     python3 start.py --port 5050 --timeout 60
+    python3 start.py --workspace-dir /opt/ecu-test-workspace
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -23,6 +25,8 @@ except ImportError:
     sys.exit(1)
 
 DEFAULT_EXE = "/usr/bin/ecu.test"
+DEFAULT_WORKSPACE = "/opt/ecu-test-workspace"
+DEFAULT_LICENSE = "2060@license01.tracetronic.de@AWS@cz47cbjc"
 
 
 def parse_args():
@@ -30,6 +34,7 @@ def parse_args():
     parser.add_argument("--exe-path", default=DEFAULT_EXE, help=f"Path to ECU-TEST executable (default: {DEFAULT_EXE})")
     parser.add_argument("--port", type=int, default=5050, help="REST API port (default: 5050)")
     parser.add_argument("--timeout", type=int, default=60, help="Seconds to wait for readiness (default: 60)")
+    parser.add_argument("--workspace-dir", default=DEFAULT_WORKSPACE, help=f"ECU-TEST workspace directory (default: {DEFAULT_WORKSPACE})")
     return parser.parse_args()
 
 
@@ -45,10 +50,18 @@ def is_already_running(port: int) -> bool:
         return False
 
 
-def launch_ecu_test(exe_path: str, port: int) -> subprocess.Popen:
-    cmd = [exe_path, "--start-web-api", f"--restApiPort={port}"]
+def launch_ecu_test(exe_path: str, port: int, workspace_dir: str) -> subprocess.Popen:
+    cmd = [exe_path, "--start-web-api", f"--restApiPort={port}", f"--workspaceDir={workspace_dir}"]
     print(f"Launching: {' '.join(cmd)}")
-    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+    # Ensure TRACET_LICENSE is set in the environment
+    env = os.environ.copy()
+    if "TRACET_LICENSE" not in env:
+        env["TRACET_LICENSE"] = DEFAULT_LICENSE
+        print(f"  Setting TRACET_LICENSE={DEFAULT_LICENSE}")
+
+    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            start_new_session=True, env=env)
 
 
 def wait_until_ready(port: int, timeout: int) -> bool:
@@ -75,7 +88,7 @@ def main():
         sys.exit(0)
 
     try:
-        launch_ecu_test(args.exe_path, args.port)
+        launch_ecu_test(args.exe_path, args.port, args.workspace_dir)
     except FileNotFoundError:
         print(f"ERROR: Executable not found: {args.exe_path}")
         sys.exit(1)

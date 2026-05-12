@@ -70,16 +70,62 @@ def get_variables(model_desc: ET.Element) -> list:
     return variables
 
 
-def generate_xam_xml(variables: list, model_key: str) -> str:
+def extract_non_signal_items(xam_path: str) -> list[str]:
+    """
+    Read an existing XAM file and extract MAPPING-ITEM elements that do NOT
+    contain an xaModelSignal XACCESS (e.g. xaJob items for StartSimulation,
+    StopSimulation, etc.).
+
+    Returns a list of XML strings (one per preserved item) that can be
+    inserted verbatim into the generated XAM.
+    """
+    if not os.path.isfile(xam_path):
+        return []
+
+    try:
+        tree = ET.parse(xam_path)
+    except ET.ParseError:
+        return []
+
+    root = tree.getroot()
+    preserved = []
+
+    for item in root.findall("MAPPING-ITEM"):
+        # Check if this item has an xaModelSignal XACCESS
+        xaccess = item.find("XACCESS")
+        if xaccess is not None:
+            xsi_type = xaccess.get("{http://www.w3.org/2001/XMLSchema-instance}type", "")
+            if xsi_type == "xaModelSignal":
+                continue  # Skip signal items — they will be regenerated
+
+        # Preserve this item (non-signal mapping like xaJob)
+        preserved.append(ET.tostring(item, encoding="unicode"))
+
+    return preserved
+
+
+def generate_xam_xml(variables: list, model_key: str, preserved_items: list[str] | None = None) -> str:
     """
     Generate the XAM XML content from the list of FMU variables.
 
     Each variable becomes a MAPPING-ITEM with an xaModelSignal XACCESS element.
+    Non-signal mapping items (e.g. xaJob for StartSimulation/StopSimulation)
+    from the existing XAM are preserved and placed before the signal items.
     """
     doc = minidom.getDOMImplementation().createDocument(None, "MASTER-MAPPING", None)
     root = doc.documentElement
     root.setAttribute("format-rev", "1")
     root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+
+    # Insert preserved non-signal items first (e.g. xaJob mappings)
+    if preserved_items:
+        for item_xml in preserved_items:
+            try:
+                item_elem = minidom.parseString(item_xml).documentElement
+                imported = doc.importNode(item_elem, deep=True)
+                root.appendChild(imported)
+            except Exception:
+                pass  # Skip malformed preserved items
 
     for var in variables:
         # Create MAPPING-ITEM
@@ -345,7 +391,12 @@ def generate_xam(
             print(f"    - {var['name']} ({var['causality']}, {var['variability']})")
         print()
 
-    xam_content = generate_xam_xml(variables, model_key)
+    # Preserve existing non-signal mapping items (e.g. xaJob for Start/StopSimulation)
+    preserved_items = extract_non_signal_items(output_path)
+    if verbose and preserved_items:
+        print(f"  Preserving {len(preserved_items)} non-signal mapping item(s)")
+
+    xam_content = generate_xam_xml(variables, model_key, preserved_items=preserved_items)
 
     # Check if the XAM is already up-to-date
     if is_xam_up_to_date(output_path, xam_content):

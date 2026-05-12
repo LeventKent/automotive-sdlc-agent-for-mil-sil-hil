@@ -137,8 +137,9 @@ The exported FMU contains C sources but only Windows/macOS binaries. It must be 
 1. FMU exported from MATLAB/Simulink and placed in the workspace `fmu/` folder
 2. FMU cross-compiled on EC2 to add `binaries/linux64/*.so` (see SKILL.md "FMU Cross-Compilation" section)
 3. ECU-TEST must be started with `--workspaceDir=/opt/ecu-test-workspace`
-4. The workspace (`.workspace/`, `Configurations/`, `Parameters/`, `fmu/`, `Packages/`) must be uploaded
+4. The workspace (`.workspace/`, `Configurations/`, `Parameters/`, `fmu/`, `Packages/`) must be uploaded via `--sync`
 5. `ECU_TEST_API_CLIENT_PATH=/opt/ecu.test-2026.1/Templates/ApiClient` must be set
+6. Remote scripts are auto-provisioned — no manual upload needed (the adapter handles this)
 
 ### Path conventions (remote)
 - `--tcf` and `--tbc`: use **filenames only** (e.g., `fmu.tcf`, `fmu.tbc`)
