@@ -1,6 +1,6 @@
 ---
-inclusion: fileMatch
-fileMatchPattern: "matlab-models/**"
+inclusion: manual
+#fileMatchPattern: "matlab-models/**"
 ---
 
 # MATLAB/Simulink Setup

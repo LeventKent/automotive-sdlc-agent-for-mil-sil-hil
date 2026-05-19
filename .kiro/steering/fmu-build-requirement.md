@@ -1,5 +1,5 @@
 ---
-inclusion: always
+inclusion: manual
 ---
 
 # FMU Build Requirement — Mandatory for Every Session
