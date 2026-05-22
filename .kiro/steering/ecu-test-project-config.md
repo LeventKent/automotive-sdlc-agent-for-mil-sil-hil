@@ -1,3 +1,7 @@
+---
+inclusion: manual
+---
+
 # ECU-TEST Project Configuration — Temperature Monitoring Demo
 
 This steering file contains project-specific knowledge for the Temperature Monitoring System
