@@ -25,7 +25,7 @@ The script takes the TCF as input and:
 | Path to TCF | `--tcf` | *(required, or use --fmu)* | Reads XAM path and FMU from the TCF |
 | Path to FMU | `--fmu` | *(alternative to --tcf)* | Direct path to the FMU file |
 | Output XAM path | `--output` | *(required with --fmu)* | Where to write the XAM file |
-| Model key | `--model-key` | Read from TCF, or `"Plant model"` | The model key used in mapping items |
+| Model key | `--model-key` | Read from TCF | The model key used in mapping items (e.g., `"Plant model"`) |
 
 ## Running the script
 
@@ -42,8 +42,8 @@ python scripts/generate_xam.py \
 
 ```bash
 python scripts/generate_xam.py \
-  --fmu "C:\workspace\fmu\TemperatureMonitoringSystem_win64.fmu" \
-  --output "C:\workspace\Parameters\FMU\fmu_global.xam" \
+  --fmu "C:\workspace\fmu\MyModel.fmu" \
+  --output "C:\workspace\Parameters\FMU\mapping.xam" \
   --model-key "Plant model"
 ```
 
@@ -62,12 +62,12 @@ The generated XAM contains one `MAPPING-ITEM` per FMU variable:
 
 ```xml
 <MAPPING-ITEM format-rev="2" xsi:type="mappingItem">
-    <ID xsi:type="string">Plant model.TemperatureOut</ID>
-    <DESCRIPTION xsi:type="string">TemperatureOut</DESCRIPTION>
+    <ID xsi:type="string">Plant model.VehicleSpeed</ID>
+    <DESCRIPTION xsi:type="string">VehicleSpeed</DESCRIPTION>
     <XACCESS format-rev="2" xsi:type="xaModelSignal">
         <MAPPING-ENUM xsi:type="vtabInfoEmpty"/>
         <MODEL-KEY xsi:type="string">Plant model</MODEL-KEY>
-        <VARIABLE-PATH xsi:type="string">TemperatureOut</VARIABLE-PATH>
+        <VARIABLE-PATH xsi:type="string">VehicleSpeed</VARIABLE-PATH>
     </XACCESS>
 </MAPPING-ITEM>
 ```

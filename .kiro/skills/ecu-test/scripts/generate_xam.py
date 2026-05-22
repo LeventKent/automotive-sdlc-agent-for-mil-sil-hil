@@ -440,7 +440,7 @@ def _parse_args():
     parser.add_argument(
         "--model-key",
         default=None,
-        help='Model key for the mapping (default: read from TCF, or "Plant model").',
+        help='Model key for the mapping (default: read from TCF; falls back to "Plant model" if not found).',
     )
     return parser.parse_args()
 

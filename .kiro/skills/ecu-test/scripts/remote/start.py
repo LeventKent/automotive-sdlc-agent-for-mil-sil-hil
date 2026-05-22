@@ -26,7 +26,6 @@ except ImportError:
 
 DEFAULT_EXE = "/usr/bin/ecu.test"
 DEFAULT_WORKSPACE = "/opt/ecu-test-workspace"
-DEFAULT_LICENSE = "2060@license01.tracetronic.de@AWS@cz47cbjc"
 
 
 def parse_args():
@@ -54,11 +53,13 @@ def launch_ecu_test(exe_path: str, port: int, workspace_dir: str) -> subprocess.
     cmd = [exe_path, "--start-web-api", f"--restApiPort={port}", f"--workspaceDir={workspace_dir}"]
     print(f"Launching: {' '.join(cmd)}")
 
-    # Ensure TRACET_LICENSE is set in the environment
+    # TRACET_LICENSE must be set in the environment (passed by the adapter or set on the instance)
     env = os.environ.copy()
-    if "TRACET_LICENSE" not in env:
-        env["TRACET_LICENSE"] = DEFAULT_LICENSE
-        print(f"  Setting TRACET_LICENSE={DEFAULT_LICENSE}")
+    license_val = env.get("TRACET_LICENSE", "")
+    if license_val:
+        print(f"Setting TRACET_LICENSE={license_val}")
+    else:
+        print("WARNING: TRACET_LICENSE not set in environment. ECU-TEST may fail to start.")
 
     return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                             start_new_session=True, env=env)
