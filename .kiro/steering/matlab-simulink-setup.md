@@ -16,32 +16,97 @@ project_path = <workspace_root>/matlab-models
 
 If the first MATLAB MCP call fails with "path validation failed: resource not found", run `pwd` in the terminal to discover the actual workspace root and retry.
 
-## MATLAB MCP Core Server
+## Common MATLAB Paths
 
-The MATLAB MCP Core Server binary should be at:
-```
-matlab-models/matlab-mcp-core-server-win64.exe
+| OS | Default Install | Binary |
+|----|----------------|--------|
+| Windows | `C:\Program Files\MATLAB\R2025b` | `bin\matlab.exe` |
+| macOS | `/Applications/MATLAB_R2025b.app` | `bin/matlab` |
+
+## Required Toolboxes
+
+The following must be installed and licensed:
+
+| Toolbox | License Feature | Purpose |
+|---------|----------------|---------|
+| MATLAB | — | Base environment |
+| Simulink | — | Model creation and simulation |
+| Simulink Coder | `Real-Time_Workshop` | C code generation from models |
+| **FMU Builder for Simulink** | *(support package, free)* | `exportToFMU` function |
+
+### Installing the FMU Builder Support Package
+
+The "FMU Builder for Simulink" is a free support package that provides `exportToFMU`. Install from within MATLAB:
+
+```matlab
+matlab.addons.install('FMU Builder for Simulink')
 ```
 
-If missing, download from GitHub:
-```
-https://github.com/matlab/matlab-mcp-core-server/releases/latest/download/matlab-mcp-core-server-win64.exe
-```
+Or open the Add-On Explorer and search for "FMU Builder for Simulink":
 
-The MCP config in `.kiro/settings/mcp.json` should reference this binary with args:
-```json
-"matlab": {
-  "command": "<workspace>/matlab-models/matlab-mcp-core-server-win64.exe",
-  "args": [
-    "--matlab-root=C:\\Program Files\\MATLAB\\R2025b",
-    "--initial-working-folder=<workspace>\\matlab-models"
-  ]
-}
+```matlab
+matlab.addons.explorer
 ```
 
-Replace `<workspace>` with the actual absolute workspace path at configuration time.
+Verify installation:
+```matlab
+exist('exportToFMU', 'file')  % should return 2 or 6
+```
 
-### macOS Configuration (alternate developer machine)
+### Optional Toolboxes (available in this workspace)
+
+| Toolbox | Purpose |
+|---------|---------|
+| Embedded Coder | Optimized code generation (not required for FMU export) |
+| Simulink Test | Model testing |
+| Simulink Coverage | Coverage analysis |
+| Stateflow | State machine modeling |
+
+## FMU Export (Source-Only)
+
+Use `exportToFMU` to generate a source-only FMU from the Simulink model. This produces a `.fmu` zip containing C sources and `modelDescription.xml` but **no compiled binaries** — compilation happens on the remote EC2 instance.
+
+```matlab
+exportToFMU(modelName, ...
+    'FMIVersion', '2.0', ...
+    'FMUType', 'CS', ...
+    'BuildConfiguration', 'source-code', ...
+    'SaveDirectory', fullfile(projectRoot, 'ecu.test-integration/ecu.test_agent_fmu_demo/fmu'));
+```
+
+### Parameters
+
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| `FMIVersion` | `'2.0'` | FMI 2.0 Co-Simulation (required by ecu.test) |
+| `FMUType` | `'CS'` | Co-Simulation (not Model Exchange) |
+| `BuildConfiguration` | `'source-code'` | Generates C sources only, no compilation |
+| `SaveDirectory` | `<workspace>/ecu.test-integration/.../fmu` | Where the .fmu file is saved |
+
+### What `exportToFMU` Produces
+
+The output `.fmu` (a zip archive) contains:
+- `modelDescription.xml` — FMI-compliant model description with variables, causality, etc.
+- `sources/*.c`, `sources/*.h` — Generated C code implementing the model
+- No `binaries/` directory (source-only mode)
+
+This is then synced to the remote and compiled there using `compile_fmu.py`.
+
+## FMU Naming Convention
+
+The FMU filename MUST match what the TCF references. All of these must be consistent:
+- TCF `MODEL-FILE`: `TemperatureMonitoringSystem.fmu`
+- FMU file location: `fmu/TemperatureMonitoringSystem.fmu` (relative to workspace root)
+- `modelIdentifier` in modelDescription.xml: `TemperatureMonitoringSystem`
+- Shared library name (after remote compilation): `binaries/linux64/TemperatureMonitoringSystem.so`
+
+To control the FMU filename, set the model name in Simulink to match (e.g., name the model `TemperatureMonitoringSystem`), or rename the exported `.fmu` file after export.
+
+## MCP Configuration
+
+The MCP config in `.kiro/settings/mcp.json` should reference the MATLAB MCP server:
+
+### macOS Configuration
 
 ```json
 "matlab": {
@@ -53,75 +118,16 @@ Replace `<workspace>` with the actual absolute workspace path at configuration t
 }
 ```
 
-## Common MATLAB Paths
+### Windows Configuration
 
-| OS | Default Install | Binary |
-|----|----------------|--------|
-| Windows | `C:\Program Files\MATLAB\R2025b` | `bin\matlab.exe` |
-| macOS | `/Applications/MATLAB_R2025b.app` | `bin/matlab` |
-
-## Available Toolboxes (this workspace)
-
-Only **MATLAB** and **Simulink** are installed (license 40830250). The following are NOT available and NOT licensed:
-- Simulink Coder (needed for native `slbuild` FMU export)
-- Simulink Compiler (needed for the "FMU Builder for Simulink" support package)
-- Simulink FMU Builder (standalone product, R2025a+)
-- Embedded Coder
-
-### Why `exportToFMU` is not available
-
-`exportToFMU` requires either:
-1. **Simulink Compiler** + the "FMU Builder for Simulink" support package (free add-on, but Simulink Compiler license required), OR
-2. **Simulink FMU Builder** (standalone licensed product from R2025a+)
-
-Both require additional paid licenses not included in this workspace's MATLAB installation. If these licenses become available in the future, install via:
-```matlab
-matlab.addons.install('FMU Builder for Simulink')  % requires Simulink Compiler license
+```json
+"matlab": {
+  "command": "<workspace>/matlab-models/matlab-mcp-core-server-win64.exe",
+  "args": [
+    "--matlab-root=C:\\Program Files\\MATLAB\\R2025b",
+    "--initial-working-folder=<workspace>\\matlab-models"
+  ]
+}
 ```
 
-## FMU Export Without Simulink Coder (Current Approach)
-
-Since no code generation toolbox is licensed, FMUs are hand-coded in C. The model equations are simple enough to express directly. Use the FMU build script at:
-```
-ecu.test-integration/ecu.test_agent_fmu_demo/fmu/build_fmu.py
-```
-
-This script:
-1. Generates C source implementing the model equations
-2. Generates a compliant `modelDescription.xml`
-3. Compiles for linux64 on the remote EC2 instance
-4. Packages everything into a valid `.fmu` zip archive
-
-### Critical FMU Requirements for ecu.test
-
-ECU-TEST uses `fmpy` to load FMUs. `fmpy` attempts to resolve ALL FMI2 function symbols from the shared library, regardless of capability flags in modelDescription.xml. The FMU shared library MUST export ALL of these functions (even as stubs returning `fmi2Error`):
-
-**Required (will crash with `undefined symbol` if missing):**
-- `fmi2GetTypesPlatform`, `fmi2GetVersion`
-- `fmi2Instantiate`, `fmi2FreeInstance`
-- `fmi2SetDebugLogging`
-- `fmi2SetupExperiment`, `fmi2EnterInitializationMode`, `fmi2ExitInitializationMode`
-- `fmi2DoStep`, `fmi2Terminate`, `fmi2Reset`
-- `fmi2GetReal`, `fmi2SetReal`, `fmi2GetInteger`, `fmi2SetInteger`
-- `fmi2GetBoolean`, `fmi2SetBoolean`, `fmi2GetString`, `fmi2SetString`
-- `fmi2GetFMUstate`, `fmi2SetFMUstate`, `fmi2FreeFMUstate`
-- `fmi2SerializedFMUstateSize`, `fmi2SerializeFMUstate`, `fmi2DeSerializeFMUstate`
-- `fmi2GetDirectionalDerivative`
-- `fmi2SetRealInputDerivatives`, `fmi2GetRealOutputDerivatives`
-- `fmi2CancelStep`
-- `fmi2GetStatus`, `fmi2GetRealStatus`, `fmi2GetIntegerStatus`, `fmi2GetBooleanStatus`, `fmi2GetStringStatus`
-
-### modelDescription.xml Requirements
-
-Must include:
-- `<DefaultExperiment startTime="0.0" stopTime="10.0" stepSize="0.01"/>`
-- Full `<CoSimulation>` element with all boolean attributes explicitly set
-- `initial="calculated"` on output ScalarVariables (not `initial="exact"` with `start` value)
-
-## FMU Naming Convention
-
-The FMU filename MUST match what the TCF references. All four of these must be consistent:
-- TCF `MODEL-FILE`: `TemperatureMonitoringSystem.fmu`
-- FMU file location: `fmu/TemperatureMonitoringSystem.fmu` (relative to workspace root)
-- `modelIdentifier` in modelDescription.xml: `TemperatureMonitoringSystem`
-- Shared library name: `binaries/linux64/TemperatureMonitoringSystem.so`
+Replace `<workspace>` with the actual absolute workspace path at configuration time.

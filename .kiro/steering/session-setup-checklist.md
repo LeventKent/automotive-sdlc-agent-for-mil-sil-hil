@@ -8,10 +8,10 @@ Use this checklist at the start of any session involving MATLAB model creation, 
 
 ## 1. MATLAB MCP Server
 
-- [ ] Check `matlab-models/matlab-mcp-core-server-win64.exe` exists
-- [ ] If missing: download from `https://github.com/matlab/matlab-mcp-core-server/releases/latest/download/matlab-mcp-core-server-win64.exe`
 - [ ] Verify MATLAB responds: call `mcp_matlab_detect_matlab_toolboxes`
-- [ ] Note: only MATLAB + Simulink are licensed. No Simulink Coder/Compiler.
+- [ ] Confirm Simulink Coder is licensed: `license('test', 'Real-Time_Workshop')` returns 1
+- [ ] Confirm FMU Builder support package is installed: `exist('exportToFMU', 'file')` returns non-zero
+- [ ] If FMU Builder missing: install via `matlab.addons.install('FMU Builder for Simulink')`
 
 ## 2. Remote EC2 Instance (ECU-TEST)
 
@@ -84,7 +84,17 @@ ssh ... "mkdir -p /opt/ecu-test-workspace/Packages"
 ssh ... "unzip -l /opt/ecu-test-workspace/fmu/TemperatureMonitoringSystem.fmu | grep linux64"
 ```
 
-Should show `binaries/linux64/TemperatureMonitoringSystem.so`. If missing, run `build_fmu.py` on remote.
+Should show `binaries/linux64/TemperatureMonitoringSystem.so`. If missing, compile on remote:
+```bash
+ssh ... "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py"
+```
+
+Verify `gcc` is available for compilation:
+```bash
+ssh ... "which gcc || echo NOT_INSTALLED"
+```
+
+If gcc is missing: `ssh ... "sudo apt-get install -y build-essential"`
 
 ### 2.7 ApiClient Path
 The remote scripts resolve ApiClient from `/opt/ecu.test/Templates/ApiClient` (a symlink to the versioned install directory, created by the CloudFormation template). Verify:

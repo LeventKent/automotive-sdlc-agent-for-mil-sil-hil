@@ -71,7 +71,7 @@ Resources:
           exec > /var/log/ecu-test-init.log 2>&1
 
           apt-get update
-          apt-get install -y python3-pip python3-setuptools software-properties-common
+          apt-get install -y python3-pip python3-setuptools software-properties-common build-essential
 
           # Install Python 3.11 and requests
           add-apt-repository -y ppa:deadsnakes/ppa

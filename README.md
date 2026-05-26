@@ -244,7 +244,7 @@ All remote execution settings are centralized in `.ecu-test-remote.json` (see `.
 
 2. **License**: Set the `license` field in `.ecu-test-remote.json`. The adapter passes it as `TRACET_LICENSE` when starting ECU-TEST.
 
-3. **FMU cross-compilation**: FMUs from MATLAB contain only Windows/macOS binaries. The C sources inside the FMU must be compiled for the target platform on the remote instance using `gcc`.
+3. **FMU compilation on remote**: FMUs are exported from MATLAB/Simulink as source-only (using `exportToFMU` with `'BuildConfiguration','source-code'`). After syncing to the remote, compile with `python3 compile_fmu.py` which uses `gcc` to build the linux64 shared library.
 
 4. **Workspace sync**: Use `./scripts/ecu-test-adapter.sh --sync` to upload the workspace (`.workspace/`, `Configurations/`, `Parameters/`, `fmu/`) to the remote.
 

@@ -72,9 +72,9 @@ SensorStatus   = 1.0 (always healthy)
 
 1. **Simulink model created** — `PlantModel.slx` in `matlab-models/` implementing the temperature monitoring equations
 2. **Model verified** — Simulation confirmed all 5 requirements satisfied
-3. **FMU build script confirmed** — `build_fmu.py` C source matches Simulink model equations
+3. **FMU exported** — `exportToFMU` produced source-only `TemperatureMonitoringSystem.fmu`
 4. **Workspace synced** — Configurations, Parameters, FMU sources uploaded to remote EC2
-5. **FMU compiled on remote** — `build_fmu.py` produced `TemperatureMonitoringSystem.fmu` (6.5 KB, linux64)
+5. **FMU compiled on remote** — `compile_fmu.py` compiled C sources for linux64 (6.5 KB)
 6. **ECU-TEST configuration restarted** — FMU loaded successfully (status: FINISHED)
 7. **Test packages created** — 5 packages (TM-601 through TM-605) from requirements
 8. **Test scripts generated** — AI-generated test logic for all packages
