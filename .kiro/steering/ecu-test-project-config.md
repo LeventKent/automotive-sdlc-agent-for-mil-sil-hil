@@ -62,8 +62,22 @@ Instead of comparing two readings (which requires variable storage), use knowled
 - **License**: Configured in `.ecu-test-remote.json` (field: `license`)
 - **ecu.test version**: 2026.1.x (not 2026.2 — license only covers 2026.1)
 - **Download URL pattern**: `https://files.tracetronic.de/d/69f0752af57b469d9a1a/` → `2026.1.3/ecu.test-2026.1.3_runner.deb`
-- **ApiClient path on remote**: `/opt/ecu.test-2026.1/Templates/ApiClient`
+- **ApiClient path on remote**: `/opt/ecu.test/Templates/ApiClient` (symlink — see below)
 - **AI Agent URL**: `.workspace/agent.xml` must contain `https://agent.tracetronic.ai/`
+
+### ApiClient Symlink Convention
+
+ecu.test installs to a versioned directory (e.g., `/opt/ecu.test-2026.1/`). The remote scripts resolve the ApiClient from the generic path `/opt/ecu.test/Templates/ApiClient`. The CloudFormation template (`infra/ecu-test-ec2.yaml`) creates a symlink during provisioning:
+
+```
+/opt/ecu.test → /opt/ecu.test-2026.1
+```
+
+This decouples the scripts from the specific installed version. If the instance was provisioned before this symlink was added, create it manually:
+
+```bash
+sudo ln -sfn /opt/ecu.test-2026.1 /opt/ecu.test
+```
 
 ## FMU Build on Remote
 
