@@ -2,7 +2,7 @@
   "mcpServers": {
     "polarion": {
       "_comments_": "REPLACE below line with your path",
-      "command": "/Users/levkent/dev/git/automotive-sdlc-agent-for-mil-sil-hil/polarion-integration/polarion-mcp/.venv/bin/python",
+      "command": "./polarion-integration/polarion-mcp/.venv/bin/python",
       "args": [
         "-m",
         "mcp_server.main_stdio"
@@ -13,7 +13,7 @@
         "_comments_": "REPLACE below line with your token",
         "POLARION_TOKEN": "eyJraWQiOiI4N2ZjNmYxNy1hYzEwYzgzMy0yOTMxODMzNy01ZTk5MDA3MSIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI4MzU4MGY2NmY3NGI0NTRhYjQ2NGUwZmE3MmQ5MjAwOSIsImlkIjoiZmNhZjk4ZjItN2YwMDAxMDEtN2ZmNzIxZjgtMGNhYWEzYTQiLCJleHAiOjE3ODU0NDg4MDAsImlhdCI6MTc3ODA2MDg1OX0.LfmEGGu7-9hfWIiDQg02FB_hTLPuZaRfozQnDg-Fc9Cd2TOStkAp0fB1hSSoLbH_mrNjw6-7V3Jhzy8LpeVKfs3iUC2_WkdqVSg6sNNjHs81JOb3F6l3wBJE-XMMiT2br9vB2n_eBvZXMw6bUpsKGDWzjjn9E35ss6BANAecXMV8N3JhXlnHQZuMVfmLQhiGbdm0Icn2MYVth0XLwoDIQQ0Rjl6hoFXN-VWI809HITb6G4dSo4oVMW5Ktc-UzF28KDXhSLyMo1pI6sdtJ857DXbWubGMjcPCKUqz2TiEPGDZE02mBE-lXcrmh-eccYIYV1oNM9OGreIqiUwoPCi-vw",
         "_comments_2": "REPLACE below line with your path",
-        "POLARION_CONFIG_PATH": "/Users/levkent/dev/git/automotive-sdlc-agent-for-mil-sil-hil/polarion-integration/temp-monitor/polarion_config.yaml"
+        "POLARION_CONFIG_PATH": "./polarion-integration/temp-monitor/polarion_config.yaml"
       },
       "disabled": false,
       "autoApprove": [
@@ -29,10 +29,10 @@
       ]
     },
     "matlab": {
-      "command": "/Users/levkent/dev/matlab/matlab-mcp-core-server",
+      "command": "matlab-mcp-core-server",
       "args": [
         "--matlab-root=/Applications/MATLAB_R2025b.app",
-        "--extension-file=/Users/levkent/dev/git/automotive-sdlc-agent-for-mil-sil-hil/simulink-agentic-toolkit/tools/tools.json"
+        "--extension-file=./simulink-agentic-toolkit/tools/tools.json"
       ],
       "autoApprove": [
         "evaluate_matlab_code",

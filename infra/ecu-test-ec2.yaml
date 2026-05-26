@@ -86,6 +86,13 @@ Resources:
           apt-get install -f -y
           rm -f /tmp/ecu-test.deb
 
+          # Create /opt/ecu.test symlink to the versioned install directory.
+          # The remote scripts resolve ApiClient from /opt/ecu.test/Templates/ApiClient.
+          ECU_TEST_DIR=$(find /opt -maxdepth 1 -type d -name 'ecu.test-*' | sort -V | tail -1)
+          if [ -n "$ECU_TEST_DIR" ]; then
+            ln -sfn "$ECU_TEST_DIR" /opt/ecu.test
+          fi
+
           # Create directories
           mkdir -p /opt/ecu-test-scripts
           chmod 755 /opt/ecu-test-scripts

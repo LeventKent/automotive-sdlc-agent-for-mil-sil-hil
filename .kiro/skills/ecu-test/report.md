@@ -37,7 +37,7 @@ python scripts/report.py \
 If the ApiClient cannot be found automatically:
 
 ```bash
-set ECU_TEST_API_CLIENT_PATH=C:\Program Files\ecu.test 2026.2\Templates\ApiClient
+set ECU_TEST_API_CLIENT_PATH=C:\Program Files\ecu.test 2026.x\Templates\ApiClient
 python scripts/report.py --report-path "C:\path\to\report.trf"
 ```
 

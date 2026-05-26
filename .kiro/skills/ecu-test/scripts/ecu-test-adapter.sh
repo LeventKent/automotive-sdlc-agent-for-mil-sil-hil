@@ -227,7 +227,7 @@ sync_workspace() {
         local stop_resp
         stop_resp=$(ssh -i "$REMOTE_KEY" -o ConnectTimeout="$SSH_TIMEOUT" -o StrictHostKeyChecking=no \
             "${REMOTE_USER}@${REMOTE_HOST}" \
-            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"action\": \"Stop\", \"tbc\": {\"tbcPath\": \"fmu.tbc\"}, \"tcf\": {\"tcfPath\": \"fmu.tcf\"}}' http://127.0.0.1:5050/api/v2/configuration" 2>/dev/null) || true
+            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"action\": \"Stop\", \"tbc\": {\"tbcPath\": \"$TBC_NAME\"}, \"tcf\": {\"tcfPath\": \"$TCF_NAME\"}}' http://127.0.0.1:5050/api/v2/configuration" 2>/dev/null) || true
 
         sleep 3
 
@@ -235,7 +235,7 @@ sync_workspace() {
         local start_resp
         start_resp=$(ssh -i "$REMOTE_KEY" -o ConnectTimeout="$SSH_TIMEOUT" -o StrictHostKeyChecking=no \
             "${REMOTE_USER}@${REMOTE_HOST}" \
-            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"action\": \"Start\", \"tbc\": {\"tbcPath\": \"fmu.tbc\"}, \"tcf\": {\"tcfPath\": \"fmu.tcf\"}}' http://127.0.0.1:5050/api/v2/configuration" 2>/dev/null) || true
+            "curl -s -X PUT -H 'Content-Type: application/json' -d '{\"action\": \"Start\", \"tbc\": {\"tbcPath\": \"$TBC_NAME\"}, \"tcf\": {\"tcfPath\": \"$TCF_NAME\"}}' http://127.0.0.1:5050/api/v2/configuration" 2>/dev/null) || true
 
         # Wait for configuration to be ready
         sleep 10
@@ -271,7 +271,6 @@ check_ecu_test_running() {
 
 # --- Remote Script Provisioning ---
 
-REMOTE_SCRIPTS_DIR="/opt/ecu-test-scripts"
 REMOTE_SCRIPTS_HASH_FILE="/tmp/.ecu-test-scripts-hash"
 
 ensure_remote_scripts() {
@@ -435,6 +434,49 @@ main() {
             echo "SUCCESS: ECU-TEST started and REST API ready"
             exit 0
         fi
+
+        # Pass configured exe_path, license, and workspace to start.py
+        local start_args=("$@")
+        # Add --exe-path if not already specified by the user
+        local has_exe=false
+        for arg in "${start_args[@]+"${start_args[@]}"}"; do
+            [[ "$arg" == "--exe-path"* ]] && has_exe=true
+        done
+        if [[ "$has_exe" == "false" && -n "$EXE_PATH" ]]; then
+            start_args+=("--exe-path" "$EXE_PATH")
+        fi
+        # Add --workspace-dir if not already specified
+        local has_ws=false
+        for arg in "${start_args[@]+"${start_args[@]}"}"; do
+            [[ "$arg" == "--workspace-dir"* ]] && has_ws=true
+        done
+        if [[ "$has_ws" == "false" && -n "$REMOTE_WORKSPACE" ]]; then
+            start_args+=("--workspace-dir" "$REMOTE_WORKSPACE")
+        fi
+
+        # Pass license via environment on the remote
+        local license_env=""
+        if [[ -n "$LICENSE" ]]; then
+            license_env="TRACET_LICENSE=$LICENSE "
+        fi
+
+        ensure_remote_scripts || {
+            echo "ERROR: Cannot execute remotely — script provisioning failed."
+            exit 1
+        }
+
+        local remote_cmd="${license_env}cd $REMOTE_SCRIPTS_DIR && python3 $REMOTE_SCRIPTS_DIR/start.py"
+        for arg in "${start_args[@]+"${start_args[@]}"}"; do
+            remote_cmd+=" '${arg//\'/\'\\\'\'}'"
+        done
+
+        ssh -i "$REMOTE_KEY" \
+            -o ConnectTimeout="$SSH_TIMEOUT" \
+            -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=15 \
+            "${REMOTE_USER}@${REMOTE_HOST}" \
+            "$remote_cmd"
+        exit $?
     fi
 
     if [[ "$MODE" == "local" ]]; then

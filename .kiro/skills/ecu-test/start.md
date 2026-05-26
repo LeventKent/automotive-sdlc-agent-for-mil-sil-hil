@@ -1,6 +1,6 @@
 # Start ECU-TEST
 
-Launches the ECU-TEST application on Windows and confirms it is reachable via its REST API.
+Launches the ECU-TEST application and confirms it is reachable via its REST API.
 
 ## When to use
 
@@ -12,20 +12,24 @@ Launches the ECU-TEST application on Windows and confirms it is reachable via it
 
 | Argument | Flag | Default | Notes |
 |---|---|---|---|
-| Path to ECU-TEST executable | `--exe-path` | *(required)* | e.g. `C:\Program Files\ecu.test 2026.2\ecu.test.exe` |
+| Path to ECU-TEST executable | `--exe-path` | from config `exe_path` | Overrides the configured executable path |
 | REST API port | `--port` | `5050` | Must match ECU-TEST's configured port |
 | Startup timeout (seconds) | `--timeout` | `60` | How long to wait for the `/live` endpoint to respond |
+| Workspace directory | `--workspace-dir` | from config `remote_workspace` | ECU-TEST workspace directory |
 
 ## Running the script
 
 ```bash
-# Via adapter (handles local/remote routing):
+# Via adapter (recommended — passes config values automatically):
+./scripts/ecu-test-adapter.sh start.py
+
+# With explicit overrides:
 ./scripts/ecu-test-adapter.sh start.py \
-  --exe-path "/opt/ecu.test/bin/ecu-test" \
+  --exe-path "/usr/bin/ecu.test" \
   --port 5050 \
   --timeout 60
 
-# Direct local invocation:
+# Direct local invocation (Windows):
 python scripts/start.py \
   --exe-path "C:\Program Files\ecu.test 2026.2\ecu.test.exe" \
   --port 5050 \

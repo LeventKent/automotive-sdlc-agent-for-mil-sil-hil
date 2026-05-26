@@ -1,14 +1,3 @@
----
-name: ecu-test
-description: >
-  Comprehensive skill for automating ecu.test — start the application, create test packages from
-  requirements, generate test scripts via AI, execute tests, and analyze test reports.
-  Use this skill when the user mentions ecu.test, ECU-TEST, test generation, test execution,
-  test packages, TRF reports, TCF/TBC configuration, or any end-to-end test workflow involving
-  ecu.test. Covers: starting ECU-TEST, creating packages, generating scripts, executing tests,
-  and analyzing results.
----
-
 # ecu.test Automation Skill
 
 Comprehensive CLI-driven automation for ecu.test — create packages, generate test scripts,
@@ -20,18 +9,23 @@ execute tests, and analyze reports without leaving the IDE.
 - The **ecu.test ApiClient** must be available (installed with ecu.test, resolved automatically).
 - The `requests` Python library is needed for the start capability.
 - All file paths passed to scripts **must be absolute**.
-- For remote mode: SSH key access to the remote EC2 instance and a `.ecu-test-remote.json` config file (see [Remote Setup](#remote-setup)).
+- For remote mode: SSH key access to the remote instance and a `.ecu-test-remote.json` config file (see [Remote Setup](#remote-setup)).
 
-## Session Startup: Check for Provisioned EC2 Instance (Remote Mode Only)
+## Session Startup: Check for Provisioned Remote Instance
 
-When working in **remote mode**, read `.ecu-test-remote.json`** in the project root at the start of the session. If the file exists and contains `"mode": "remote"` with a `hostname`, a remote EC2 instance has already been provisioned and is ready to use — **skip any EC2 provisioning steps** and go straight to using the instance.
+When working in **remote mode**, read `.ecu-test-remote.json` in the project root at the start of the session. If the file exists and contains `"mode": "remote"` with a `hostname`, a remote instance has already been provisioned and is ready to use — **skip any provisioning steps** and go straight to using the instance.
 
-The file is written automatically when the EC2 instance is deployed via the CloudFormation stack. It contains:
-- `hostname` — the public DNS name of the EC2 instance
+The file contains:
+- `hostname` — the public DNS name or IP of the remote instance
 - `username` — SSH username (typically `ubuntu`)
-- `key_path` — path to the SSH private key (e.g. `~/.ssh/ecu-test-key.pem`)
+- `key_path` — path to the SSH private key
 - `local_workspace` — absolute path to the local ecu.test workspace directory
 - `remote_workspace` — path on the remote instance (default: `/opt/ecu-test-workspace`)
+- `remote_scripts_dir` — path for deployed scripts on remote (default: `/opt/ecu-test-scripts`)
+- `exe_path` — path to the ecu.test executable on the remote
+- `license` — the TRACET_LICENSE value for the remote instance
+- `tbc_name` — filename of the test bench configuration (e.g., `MyBench.tbc`)
+- `tcf_name` — filename of the test configuration (e.g., `MyConfig.tcf`)
 
 The adapter scripts (`ecu-test-adapter.sh`) pick up this config automatically.
 
@@ -41,7 +35,7 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 
 ```bash
 # Start ECU-TEST (remote mode skips if already running)
-./scripts/ecu-test-adapter.sh start.py --exe-path "/opt/ecu.test/bin/ecu-test"
+./scripts/ecu-test-adapter.sh start.py
 
 # Create a package from requirement steps
 ./scripts/ecu-test-adapter.sh create_package.py \
@@ -90,13 +84,13 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 3. **One capability at a time** — ECU-TEST processes requests sequentially; wait for one to finish before starting the next.
 4. **Decompose requirements carefully** — split into precondition, action, postcondition. Keep it minimal.
 5. **Check reports after execution** — use the report capability to understand failures.
-6. **Do NOT include "Start the simulation" steps** — the TBC has `AutoSimulation=True` and `START-OPTION=1`, so the FMI tool and simulation start automatically when the configuration is loaded. Adding a "Start the simulation" action step will always fail with "No relevant signal or function found".
-7. **Configuration must be started before execution** — the `execute.py` script handles this automatically by calling `start_configuration()` with the TCF/TBC before running the test. If calling the API directly, ensure `PUT /api/v2/configuration` is called first.
+6. **Do NOT include "Start the simulation" steps** — if the TBC has `AutoSimulation=True` and `START-OPTION=1`, the FMI tool and simulation start automatically when the configuration is loaded. Adding a "Start the simulation" action step will fail.
+7. **Configuration must be started before execution** — the `execute.py` script handles this automatically by calling `start_configuration()` with the TCF/TBC before running the test.
 8. **Sync workspace before first execution** — in remote mode, always run `--sync` before the first test execution in a session to ensure the remote has the latest Configurations, Parameters, and FMU files. Use `--sync --restart-config` if the configuration is already running and you need ECU-TEST to pick up the changes.
 9. **Build FMU on remote AFTER sync** — `--sync` overwrites the compiled FMU with the local source-only version. Always rebuild on the remote after syncing, then restart the configuration. See [FMU Sync & Build Order](#fmu-sync--build-order).
 10. **Never use simulation-lifecycle or variable-storage language in package steps** — the AI script generator will emit broken code. See [Test Step Phrasing Rules](#test-step-phrasing-rules).
-11. **Remote scripts are auto-provisioned** — the adapter automatically uploads scripts from `.kiro/skills/ecu-test/scripts/remote/` to `/opt/ecu-test-scripts/` on the EC2 instance before the first remote execution. You do NOT need to manually upload them. If you suspect they are stale, run `--ensure-scripts` to force a re-check.
-12. **Never invoke SSH directly to work around the adapter** — the adapter handles SSH key path resolution (Windows → WSL mount translation, permission fixes) and remote script provisioning. Bypassing it leads to permission errors and missing scripts. Always use the adapter for all remote operations.
+11. **Remote scripts are auto-provisioned** — the adapter automatically uploads scripts from `.kiro/skills/ecu-test/scripts/remote/` to the configured `remote_scripts_dir` on the remote instance before the first remote execution. Run `--ensure-scripts` to force a re-check.
+12. **Never invoke SSH directly to work around the adapter** — the adapter handles SSH key path resolution, permission fixes, and remote script provisioning. Always use the adapter for all remote operations.
 
 
 ## FMU Sync & Build Order
@@ -104,41 +98,27 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 The `--sync` command uploads the local `fmu/` directory to the remote, which **overwrites the compiled FMU** with the local source-only version. The correct sequence is:
 
 1. `--sync` (uploads Configurations, Parameters, FMU sources, .workspace)
-2. Build FMU on remote: `ssh ... "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"`
-3. Stop configuration: `PUT /api/v2/configuration` with `action: Stop`
+2. Build FMU on remote: `ssh ... "cd <remote_workspace>/fmu && python3 build_fmu.py"`
+3. Stop configuration via REST API
 4. Wait 5 seconds
-5. Start configuration: `PUT /api/v2/configuration` with `action: Start`
+5. Start configuration via REST API
 6. Wait 15 seconds for FMU to load and port to connect
 7. Verify configuration status is `FINISHED` with `action: Start`
 
-**Never** start or restart the configuration between sync and FMU build. The FMI port will fail with `Port not available or not connected: MDL01` if the FMU has no `binaries/linux64/*.so`.
+**Never** start or restart the configuration between sync and FMU build. The FMI port will fail if the FMU has no compiled binaries for the target platform.
 
-**Do NOT use `--sync --restart-config`** — it restarts the config before the FMU is rebuilt. Always use `--sync` alone, then build, then manually restart.
-
-```bash
-# Correct sequence:
-./scripts/ecu-test-adapter.sh --sync
-ssh -i "$KEY" ubuntu@$HOST "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
-ssh -i "$KEY" ubuntu@$HOST 'curl -s -X PUT -H "Content-Type: application/json" \
-  -d "{\"action\":\"Stop\",\"tbc\":{\"tbcPath\":\"fmu.tbc\"},\"tcf\":{\"tcfPath\":\"fmu.tcf\"}}" \
-  http://127.0.0.1:5050/api/v2/configuration'
-sleep 5
-ssh -i "$KEY" ubuntu@$HOST 'curl -s -X PUT -H "Content-Type: application/json" \
-  -d "{\"action\":\"Start\",\"tbc\":{\"tbcPath\":\"fmu.tbc\"},\"tcf\":{\"tcfPath\":\"fmu.tcf\"}}" \
-  http://127.0.0.1:5050/api/v2/configuration'
-sleep 15
-```
+**Do NOT use `--sync --restart-config`** when the FMU needs rebuilding — it restarts the config before the FMU is rebuilt. Use `--sync` alone, then build, then manually restart.
 
 
 ## Test Step Phrasing Rules
 
-The AI test script generator interprets natural language steps literally. Certain phrases cause it to emit `MDL01.StartSimulation` calls or undefined variable references, which fail at runtime.
+The AI test script generator interprets natural language steps literally. Certain phrases cause it to emit broken code.
 
 ### NEVER use these phrases in package steps:
 
 | Forbidden phrase | Why it fails |
 |---|---|
-| "Start the simulation" | AutoSimulation=True handles this; explicit calls fail |
+| "Start the simulation" | AutoSimulation handles this; explicit calls fail |
 | "Set simulation time to ..." | Interpreted as StartSimulation |
 | "Wait 0 seconds for simulation to initialize" | Interpreted as needing to start simulation |
 | "Store value as ..." / "save as variable" | Generates undefined variable references |
@@ -148,33 +128,24 @@ The AI test script generator interprets natural language steps literally. Certai
 ### ALWAYS use these patterns instead:
 
 **For preconditions (verify connectivity):**
-- ✅ "Read signal Plant model.SensorStatus to confirm model is connected."
-- ✅ "Read signal Plant model.TemperatureOut to confirm model is connected."
+- ✅ "Read signal <ModelKey>.<SignalName> to confirm model is connected."
 
 **For time-based actions:**
-- ✅ "Wait 8 seconds for temperature to rise."
-- ✅ "Wait 5 seconds."
+- ✅ "Wait N seconds for <condition>."
+- ✅ "Wait N seconds."
 
 **For postconditions (assertions):**
-- ✅ "Verify TemperatureOut is between 0 and 125000 mC."
-- ✅ "Verify AlertOut is not equal to 0."
-- ✅ "Verify AlertOut equals 0."
-- ✅ "Verify SensorStatus equals 1."
-- ✅ "Verify TemperatureOut is greater than 20000." (proves value changed from known initial)
+- ✅ "Verify <SignalName> is between <min> and <max>."
+- ✅ "Verify <SignalName> is not equal to <value>."
+- ✅ "Verify <SignalName> equals <value>."
+- ✅ "Verify <SignalName> is greater than <value>."
 
 ### Testing "value changed over time" without variables:
 
 Instead of comparing two readings (which requires variable storage), use knowledge of the model's initial conditions:
-- The model starts at TemperatureOut = 20000 at t=0
-- After waiting N seconds, assert `value > 20000` to prove it changed
+- Know the initial value at t=0
+- After waiting N seconds, assert `value > initial_value` to prove it changed
 - This avoids cross-step variable references entirely
-
-### Testing "AlertOut = 0 when temp is in range":
-
-Read both signals in the postcondition at a time when temperature is known to be below threshold:
-- At t=0, temperature is 20000 (well below 80000)
-- Simply verify AlertOut == 0 without conditional logic
-- The precondition read confirms the model is connected and temp is below threshold
 
 
 ## Capabilities
@@ -186,6 +157,7 @@ Read both signals in the postcondition at a time when temperature is known to be
 | Generate test script (AI) | `scripts/generate.py` | [generate.md](generate.md) |
 | Execute test case | `scripts/execute.py` | [execute.md](execute.md) |
 | Analyze TRF report | `scripts/report.py` | [report.md](report.md) |
+| Generate XAM mapping | `scripts/generate_xam.py` | [generate-xam.md](generate-xam.md) |
 | End-to-end workflow | *(orchestration)* | [end-to-end.md](end-to-end.md) |
 
 ## Guide Index
@@ -230,8 +202,13 @@ Create `.ecu-test-remote.json` in the project root (see `.ecu-test-remote.json.e
   "hostname": "ec2-xx-xx-xx-xx.compute-1.amazonaws.com",
   "username": "ubuntu",
   "key_path": "~/.ssh/ecu-test-key.pem",
-  "local_workspace": "/path/to/ecu.test-integration/ecu.test_agent_fmu_demo",
+  "local_workspace": "/path/to/ecu.test-workspace",
   "remote_workspace": "/opt/ecu-test-workspace",
+  "remote_scripts_dir": "/opt/ecu-test-scripts",
+  "exe_path": "/usr/bin/ecu.test",
+  "license": "YOUR_LICENSE_STRING",
+  "tbc_name": "MyBench.tbc",
+  "tcf_name": "MyConfig.tcf",
   "ssh_timeout": 30,
   "exec_timeout": 600,
   "transfer_timeout": 300
@@ -240,51 +217,73 @@ Create `.ecu-test-remote.json` in the project root (see `.ecu-test-remote.json.e
 
 > **Note:** `local_workspace` should point to the ecu.test workspace directory (the folder containing `Configurations/`, `Parameters/`, etc.), not the project root.
 
+### Configuration Fields
+
+| Field | Required | Default | Description |
+|---|---|---|---|
+| `mode` | yes | `local` | Execution mode: `local` or `remote` |
+| `hostname` | remote only | — | Public DNS or IP of the remote instance |
+| `username` | remote only | `ubuntu` | SSH username |
+| `key_path` | remote only | — | Path to SSH private key |
+| `local_workspace` | yes | — | Absolute path to local ecu.test workspace |
+| `remote_workspace` | no | `/opt/ecu-test-workspace` | Workspace path on remote |
+| `remote_scripts_dir` | no | `/opt/ecu-test-scripts` | Script deployment path on remote |
+| `exe_path` | no | `/usr/bin/ecu.test` | Path to ecu.test executable on remote |
+| `license` | remote only | — | TRACET_LICENSE value for the remote instance |
+| `tbc_name` | no | — | TBC filename for config restart (e.g., `MyBench.tbc`) |
+| `tcf_name` | no | — | TCF filename for config restart (e.g., `MyConfig.tcf`) |
+| `ssh_timeout` | no | `30` | SSH connection timeout in seconds |
+| `exec_timeout` | no | `600` | Script execution timeout in seconds |
+| `transfer_timeout` | no | `300` | File transfer timeout in seconds |
+
 ### SSH Key Path Handling
 
-The adapter automatically resolves `key_path` from multiple formats commonly encountered on Windows:
+The adapter automatically resolves `key_path` from multiple formats:
 
-| Format in config | Resolved to (in WSL/Git Bash) |
+| Format in config | Resolved to |
 |---|---|
 | `~/.ssh/key.pem` | `$HOME/.ssh/key.pem` |
 | `C:\Users\me\.ssh\key.pem` | `/mnt/c/Users/me/.ssh/key.pem` |
 | `C:/Users/me/.ssh/key.pem` | `/mnt/c/Users/me/.ssh/key.pem` |
 | `/c/Users/me/.ssh/key.pem` (Git Bash) | `/mnt/c/Users/me/.ssh/key.pem` |
-| `/mnt/c/Users/me/.ssh/key.pem` | `/mnt/c/Users/me/.ssh/key.pem` (unchanged) |
+| `/mnt/c/Users/me/.ssh/key.pem` | unchanged |
 
-**Permission auto-fix:** SSH keys on Windows mounts (`/mnt/c/...`) always show `0777` permissions, which SSH rejects. The adapter automatically copies the key to `/tmp/.ecu-test-ssh-key-<uid>` with `chmod 600`. This is transparent and requires no user action.
+**Permission auto-fix:** SSH keys on Windows mounts (`/mnt/c/...`) always show `0777` permissions, which SSH rejects. The adapter automatically copies the key to a temp location with `chmod 600`.
 
-> **Tip:** You can use any of the above formats in `.ecu-test-remote.json`. The adapter handles the translation.
+### Environment Variable Overrides
 
-Or use environment variables (take precedence over config file):
+Environment variables take precedence over the config file:
 
 | Variable | Description |
 |---|---|
 | `ECU_TEST_MODE` | `local` or `remote` |
-| `ECU_TEST_REMOTE_HOST` | Hostname/IP of remote EC2 |
+| `ECU_TEST_REMOTE_HOST` | Hostname/IP of remote instance |
 | `ECU_TEST_REMOTE_USER` | SSH username (default: `ubuntu`) |
 | `ECU_TEST_REMOTE_KEY` | Path to SSH private key |
 | `ECU_TEST_LOCAL_WORKSPACE` | Local workspace base path |
-| `ECU_TEST_REMOTE_WORKSPACE` | Remote workspace path (default: `/opt/ecu-test-workspace`) |
-| `ECU_TEST_SSH_TIMEOUT` | SSH connection timeout in seconds (default: `30`) |
-| `ECU_TEST_EXEC_TIMEOUT` | Script execution timeout in seconds (default: `600`) |
-| `ECU_TEST_TRANSFER_TIMEOUT` | File transfer timeout in seconds (default: `300`) |
+| `ECU_TEST_REMOTE_WORKSPACE` | Remote workspace path |
+| `ECU_TEST_REMOTE_SCRIPTS_DIR` | Remote scripts directory |
+| `ECU_TEST_EXE_PATH` | Path to ecu.test executable |
+| `ECU_TEST_LICENSE` | TRACET_LICENSE value |
+| `ECU_TEST_TBC_NAME` | TBC filename |
+| `ECU_TEST_TCF_NAME` | TCF filename |
+| `ECU_TEST_SSH_TIMEOUT` | SSH connection timeout in seconds |
+| `ECU_TEST_EXEC_TIMEOUT` | Script execution timeout in seconds |
+| `ECU_TEST_TRANSFER_TIMEOUT` | File transfer timeout in seconds |
 
 ### Infrastructure Deployment
 
-Deploy the remote EC2 instance using the CloudFormation template:
+Deploy the remote instance using the CloudFormation template:
 
 ```bash
 aws cloudformation deploy \
   --template-file infra/ecu-test-ec2.yaml \
   --stack-name ecu-test-remote \
   --parameter-overrides \
-    KeyPairName=ecu-test-key \
-    AllowedSSHCidr="<your-ip>/16" \
-    EcuTestDebUrl="https://files.tracetronic.de/d/69f0752af57b469d9a1a/files/?p=%2F2026.1.3%2Fecu.test-2026.1.3_runner.deb&dl=1"
+    KeyPairName=my-key \
+    AllowedSSHCidr="<your-ip>/24" \
+    EcuTestDebUrl="<url-to-ecu-test-deb>"
 ```
-
-> **Important:** Use ecu.test **2026.1.x** (not 2026.2) — the license `TRACET_LICENSE=2060@license01.tracetronic.de@AWS@cz47cbjc` only covers 2026.1.
 
 After deployment, set up the instance:
 
@@ -294,128 +293,51 @@ INSTANCE_IP=$(aws cloudformation describe-stacks --stack-name ecu-test-remote \
   --query 'Stacks[0].Outputs[?OutputKey==`InstancePublicIp`].OutputValue' --output text)
 
 # Remote scripts are auto-provisioned by the adapter on first use.
-# To manually force provisioning (e.g., after updating scripts):
+# To manually force provisioning:
 ./scripts/ecu-test-adapter.sh --ensure-scripts
 
-# Set the license
-ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP \
-  "echo 'TRACET_LICENSE=2060@license01.tracetronic.de@AWS@cz47cbjc' | sudo tee -a /etc/environment"
+# Set the license (use the value from your .ecu-test-remote.json)
+ssh -i ~/.ssh/my-key.pem ubuntu@$INSTANCE_IP \
+  "echo 'TRACET_LICENSE=<your-license>' | sudo tee -a /etc/environment"
 ```
-
-> **Note:** You no longer need to manually `scp` scripts to the remote. The adapter's `ensure_remote_scripts()` function handles this automatically before the first remote command execution. It compares local and remote script counts and uploads if needed.
 
 ### Uploading the ecu.test Workspace
 
-The full workspace must be uploaded to `/opt/ecu-test-workspace/` on the remote instance:
+Use the adapter's `--sync` command to upload the workspace:
 
 ```bash
-scp -i ~/.ssh/ecu-test-key.pem -r \
-  ecu.test-integration/ecu.test_agent_fmu_demo/.workspace \
-  ecu.test-integration/ecu.test_agent_fmu_demo/Configurations \
-  ecu.test-integration/ecu.test_agent_fmu_demo/Parameters \
-  ecu.test-integration/ecu.test_agent_fmu_demo/fmu \
-  ubuntu@$INSTANCE_IP:/opt/ecu-test-workspace/
+./scripts/ecu-test-adapter.sh --sync
 ```
 
-Create the Packages directory:
-```bash
-ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP "mkdir -p /opt/ecu-test-workspace/Packages"
-```
+This uploads `.workspace/`, `Configurations/`, `Parameters/`, and `fmu/` directories and creates the `Packages/` directory on the remote.
 
 ### FMU Cross-Compilation for Linux
 
-#### Option A: With Simulink Coder/Compiler (if licensed)
-
-```matlab
-exportToFMU('TemperatureMonitoringSystem', ...
-    'FMIVersion', '2.0', ...
-    'FMUType', 'CS', ...
-    'CreateModelReport', 'on', ...
-    'SaveDirectory', fullfile(pwd, 'ecu.test-integration/ecu.test_agent_fmu_demo/fmu'));
-```
-
-Then cross-compile on the remote instance (the exported FMU contains C sources):
+FMUs exported from MATLAB/Simulink on Windows/macOS contain only native binaries. The C sources inside the FMU must be compiled for the target platform on the remote instance:
 
 ```bash
-ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP "
-  sudo apt-get install -y gcc unzip zip
-  cd /opt/ecu-test-workspace/fmu
-  mkdir -p /tmp/fmu_build
-  unzip -o TemperatureMonitoringSystem.fmu -d /tmp/fmu_build
-  cd /tmp/fmu_build/sources
-  gcc -shared -fPIC -o TemperatureMonitoringSystem.so *.c -I. -lm
-  mkdir -p /tmp/fmu_build/binaries/linux64
-  cp TemperatureMonitoringSystem.so /tmp/fmu_build/binaries/linux64/
-  cd /tmp/fmu_build
-  zip -r /opt/ecu-test-workspace/fmu/TemperatureMonitoringSystem.fmu \
-    modelDescription.xml binaries/ sources/
-  rm -rf /tmp/fmu_build
-"
-```
-
-#### Option B: Without Simulink Coder (hand-coded FMU)
-
-If only base MATLAB + Simulink are licensed, use the build script:
-
-```bash
-# Upload and run on remote:
-scp -i ~/.ssh/ecu-test-key.pem \
-  ecu.test-integration/ecu.test_agent_fmu_demo/fmu/build_fmu.py \
-  ubuntu@$INSTANCE_IP:/opt/ecu-test-workspace/fmu/
-
-ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP \
+# Upload and build on remote:
+./scripts/ecu-test-adapter.sh --sync
+ssh -i ~/.ssh/my-key.pem ubuntu@$INSTANCE_IP \
   "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
 ```
-
-Or generate source-only locally and compile on remote:
-```bash
-# Local: generate FMU with source (no binary)
-python ecu.test-integration/ecu.test_agent_fmu_demo/fmu/build_fmu.py --source-only
-
-# Upload to remote
-scp -i ~/.ssh/ecu-test-key.pem \
-  ecu.test-integration/ecu.test_agent_fmu_demo/fmu/TemperatureMonitoringSystem.fmu \
-  ubuntu@$INSTANCE_IP:/opt/ecu-test-workspace/fmu/
-
-# Compile on remote
-ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP \
-  "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
-```
-
-> **Important:** The FMU shared library must export ALL FMI2 functions (even as stubs) because ECU-TEST's `fmpy` resolves all symbols regardless of capability flags. See `build_fmu.py` for the complete list.
 
 ### Starting ECU-TEST on the Remote Instance
 
-ECU-TEST must be started with the `--workspaceDir` flag and the `TRACET_LICENSE` environment variable:
-
 ```bash
-ssh -i ~/.ssh/ecu-test-key.pem ubuntu@$INSTANCE_IP "
-  export TRACET_LICENSE=2060@license01.tracetronic.de@AWS@cz47cbjc
-  /usr/bin/ecu.test --start-web-api --restApiPort=5050 --workspaceDir=/opt/ecu-test-workspace &
-"
-```
-
-Or via the adapter (which handles the lifecycle check):
-```bash
+# Via the adapter (recommended — handles lifecycle check):
 ./scripts/ecu-test-adapter.sh start.py
 ```
 
-### Remote Script Environment Variable
-
-The remote scripts need the ApiClient path set:
-```
-ECU_TEST_API_CLIENT_PATH=/opt/ecu.test-2026.1/Templates/ApiClient
-```
-
-This is required for `create_package.py`, `generate.py`, and `report.py`.
+The adapter passes the configured `exe_path`, `license`, and `remote_workspace` automatically.
 
 ### TCF/TBC Path Convention
 
 When configuring or executing via the REST API, use **filenames only** (not full paths) for TCF and TBC:
-- ✅ `--tcf 'fmu.tcf' --tbc 'fmu.tbc'`
-- ❌ `--tcf '/opt/ecu-test-workspace/Configurations/fmu.tcf'`
+- ✅ `--tcf 'MyConfig.tcf' --tbc 'MyBench.tbc'`
+- ❌ `--tcf '/opt/ecu-test-workspace/Configurations/MyConfig.tcf'`
 
 ECU-TEST resolves these relative to the workspace's `Configurations/` folder.
 
 For `--test-case` (execution), use the **absolute path**:
-- ✅ `--test-case "/opt/ecu-test-workspace/Packages/TM-601.pkg"`
+- ✅ `--test-case "/opt/ecu-test-workspace/Packages/MyTest.pkg"`

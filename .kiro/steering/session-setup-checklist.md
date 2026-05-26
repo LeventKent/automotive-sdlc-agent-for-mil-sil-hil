@@ -87,12 +87,15 @@ ssh ... "unzip -l /opt/ecu-test-workspace/fmu/TemperatureMonitoringSystem.fmu | 
 Should show `binaries/linux64/TemperatureMonitoringSystem.so`. If missing, run `build_fmu.py` on remote.
 
 ### 2.7 ApiClient Path
-The remote scripts need:
-```
-ECU_TEST_API_CLIENT_PATH=/opt/ecu.test-2026.1/Templates/ApiClient
+The remote scripts resolve ApiClient from `/opt/ecu.test/Templates/ApiClient` (a symlink to the versioned install directory, created by the CloudFormation template). Verify:
+```bash
+ssh ... "ls -l /opt/ecu.test && ls /opt/ecu.test/Templates/ApiClient/ApiClient.py"
 ```
 
-Verify: `ssh ... "ls /opt/ecu.test-2026.1/Templates/ApiClient/ApiClient.py"`
+If the symlink is missing (instance provisioned before this was added):
+```bash
+ssh ... "sudo ln -sfn /opt/ecu.test-2026.1 /opt/ecu.test"
+```
 
 ## 3. ECU-TEST Configuration Notes
 
