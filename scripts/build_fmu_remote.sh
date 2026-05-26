@@ -20,9 +20,9 @@ SECURE_KEY="/tmp/.ecu-test-ssh-key-$(id -u)"
 cp "$KEY_PATH" "$SECURE_KEY"
 chmod 600 "$SECURE_KEY"
 
-echo "Building FMU on remote: $USER@$HOST"
+echo "Compiling FMU on remote: $USER@$HOST"
 ssh -i "$SECURE_KEY" -o ConnectTimeout=30 -o StrictHostKeyChecking=no \
-    "${USER}@${HOST}" "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
+    "${USER}@${HOST}" "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py"
 
 echo ""
 echo "Restarting ECU-TEST configuration..."

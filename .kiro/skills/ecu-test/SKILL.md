@@ -87,7 +87,7 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 6. **Do NOT include "Start the simulation" steps** — if the TBC has `AutoSimulation=True` and `START-OPTION=1`, the FMI tool and simulation start automatically when the configuration is loaded. Adding a "Start the simulation" action step will fail.
 7. **Configuration must be started before execution** — the `execute.py` script handles this automatically by calling `start_configuration()` with the TCF/TBC before running the test.
 8. **Sync workspace before first execution** — in remote mode, always run `--sync` before the first test execution in a session to ensure the remote has the latest Configurations, Parameters, and FMU files. Use `--sync --restart-config` if the configuration is already running and you need ECU-TEST to pick up the changes.
-9. **Build FMU on remote AFTER sync** — `--sync` overwrites the compiled FMU with the local source-only version. Always rebuild on the remote after syncing, then restart the configuration. See [FMU Sync & Build Order](#fmu-sync--build-order).
+9. **Compile FMU on remote AFTER sync** — `--sync` overwrites the compiled FMU with the local source-only version. Always compile on the remote after syncing, then restart the configuration. See [FMU Sync & Build Order](#fmu-sync--build-order).
 10. **Never use simulation-lifecycle or variable-storage language in package steps** — the AI script generator will emit broken code. See [Test Step Phrasing Rules](#test-step-phrasing-rules).
 11. **Remote scripts are auto-provisioned** — the adapter automatically uploads scripts from `.kiro/skills/ecu-test/scripts/remote/` to the configured `remote_scripts_dir` on the remote instance before the first remote execution. Run `--ensure-scripts` to force a re-check.
 12. **Never invoke SSH directly to work around the adapter** — the adapter handles SSH key path resolution, permission fixes, and remote script provisioning. Always use the adapter for all remote operations.
@@ -95,19 +95,19 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 
 ## FMU Sync & Build Order
 
-The `--sync` command uploads the local `fmu/` directory to the remote, which **overwrites the compiled FMU** with the local source-only version. The correct sequence is:
+The `--sync` command uploads the local `fmu/` directory to the remote, which **overwrites the compiled FMU** with the local source-only version (produced by `exportToFMU`). The correct sequence is:
 
-1. `--sync` (uploads Configurations, Parameters, FMU sources, .workspace)
-2. Build FMU on remote: `ssh ... "cd <remote_workspace>/fmu && python3 build_fmu.py"`
+1. `--sync` (uploads Configurations, Parameters, source-only FMU, .workspace)
+2. Compile FMU on remote: `ssh ... "cd <remote_workspace>/fmu && python3 compile_fmu.py"`
 3. Stop configuration via REST API
 4. Wait 5 seconds
 5. Start configuration via REST API
 6. Wait 15 seconds for FMU to load and port to connect
 7. Verify configuration status is `FINISHED` with `action: Start`
 
-**Never** start or restart the configuration between sync and FMU build. The FMI port will fail if the FMU has no compiled binaries for the target platform.
+**Never** start or restart the configuration between sync and FMU compilation. The FMI port will fail if the FMU has no compiled binaries for the target platform.
 
-**Do NOT use `--sync --restart-config`** when the FMU needs rebuilding — it restarts the config before the FMU is rebuilt. Use `--sync` alone, then build, then manually restart.
+**Do NOT use `--sync --restart-config`** when the FMU needs recompiling — it restarts the config before the FMU is compiled. Use `--sync` alone, then compile, then manually restart.
 
 
 ## Test Step Phrasing Rules
@@ -311,16 +311,18 @@ Use the adapter's `--sync` command to upload the workspace:
 
 This uploads `.workspace/`, `Configurations/`, `Parameters/`, and `fmu/` directories and creates the `Packages/` directory on the remote.
 
-### FMU Cross-Compilation for Linux
+### FMU Compilation on Remote
 
-FMUs exported from MATLAB/Simulink on Windows/macOS contain only native binaries. The C sources inside the FMU must be compiled for the target platform on the remote instance:
+FMUs exported from MATLAB/Simulink using `exportToFMU` with `'BuildConfiguration','source-code'` contain C sources but no compiled binaries. The sources must be compiled for linux64 on the remote instance:
 
 ```bash
-# Upload and build on remote:
+# Sync workspace (uploads source-only .fmu) then compile on remote:
 ./scripts/ecu-test-adapter.sh --sync
 ssh -i ~/.ssh/my-key.pem ubuntu@$INSTANCE_IP \
-  "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
+  "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py"
 ```
+
+The `compile_fmu.py` script extracts the C sources from the `.fmu`, compiles them with `gcc` for linux64, and repackages the `.fmu` with the compiled shared library.
 
 ### Starting ECU-TEST on the Remote Instance
 

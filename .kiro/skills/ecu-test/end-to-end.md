@@ -121,24 +121,25 @@ When running in remote mode:
 
 ### FMU Generation from MATLAB/Simulink
 
-Before tests can run, the FMU must be exported from the Simulink model:
+Before tests can run, the FMU must be exported from the Simulink model as source-only:
 
 ```matlab
 exportToFMU('ModelName', ...
     'FMIVersion', '2.0', ...
     'FMUType', 'CS', ...
-    'CreateModelReport', 'on', ...
+    'BuildConfiguration', 'source-code', ...
     'SaveDirectory', fullfile(pwd, 'path/to/workspace/fmu'));
 ```
 
-The exported FMU contains C sources but only native binaries. It must be cross-compiled for the target platform on the remote instance.
+The exported FMU contains C sources and `modelDescription.xml` but no compiled binaries. It must be compiled for linux64 on the remote instance using `compile_fmu.py`.
 
 ### Pre-flight checklist
-1. FMU exported and placed in the workspace `fmu/` folder
+1. FMU exported (source-only) and placed in the workspace `fmu/` folder
 2. Workspace synced to remote via `--sync`
-3. FMU cross-compiled on remote (see SKILL.md "FMU Cross-Compilation" section)
-4. ECU-TEST started (via `./scripts/ecu-test-adapter.sh start.py`)
-5. Remote scripts are auto-provisioned — no manual upload needed
+3. FMU compiled on remote: `ssh ... "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py"`
+4. ECU-TEST configuration restarted to load the compiled FMU
+5. ECU-TEST started (via `./scripts/ecu-test-adapter.sh start.py`)
+6. Remote scripts are auto-provisioned — no manual upload needed
 
 ### Path conventions (remote)
 - `--tcf` and `--tbc`: use **filenames only** (e.g., `MyConfig.tcf`, `MyBench.tbc`)

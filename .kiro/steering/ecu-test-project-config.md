@@ -79,12 +79,12 @@ This decouples the scripts from the specific installed version. If the instance 
 sudo ln -sfn /opt/ecu.test-2026.1 /opt/ecu.test
 ```
 
-## FMU Build on Remote
+## FMU Compilation on Remote
 
-After `--sync`, rebuild the FMU on the remote:
+After `--sync`, compile the source-only FMU on the remote:
 
 ```bash
-ssh -i "$KEY" ubuntu@$HOST "cd /opt/ecu-test-workspace/fmu && python3 build_fmu.py"
+ssh -i "$KEY" ubuntu@$HOST "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py"
 ```
 
 Then restart the configuration:
