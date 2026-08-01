@@ -63,6 +63,30 @@ def find_source_files(fmu_extract_dir: Path) -> list[Path]:
     return c_files
 
 
+def find_fmi2_headers() -> Path | None:
+    """Locate FMI2 standard headers from the fmpy installation."""
+    try:
+        import fmpy
+        fmpy_dir = Path(fmpy.__file__).parent
+        c_code_dir = fmpy_dir / "c-code"
+        if c_code_dir.exists() and (c_code_dir / "fmi2Functions.h").exists():
+            return c_code_dir
+    except ImportError:
+        pass
+
+    # Fallback: search common locations
+    common_paths = [
+        Path("/opt/ecu.test-2026.2/lib/python3.13/site-packages/fmpy/c-code"),
+        Path("/usr/local/include/fmi2"),
+        Path("/usr/include/fmi2"),
+    ]
+    for p in common_paths:
+        if p.exists() and (p / "fmi2Functions.h").exists():
+            return p
+
+    return None
+
+
 def find_include_dirs(fmu_extract_dir: Path) -> list[Path]:
     """Find include directories for compilation."""
     include_dirs = []
@@ -75,6 +99,14 @@ def find_include_dirs(fmu_extract_dir: Path) -> list[Path]:
             parent = h_file.parent
             if parent not in include_dirs:
                 include_dirs.append(parent)
+
+    # Add FMI2 standard headers (not bundled by MATLAB's exportToFMU)
+    fmi2_dir = find_fmi2_headers()
+    if fmi2_dir:
+        include_dirs.append(fmi2_dir)
+        print(f"FMI2 headers: {fmi2_dir}")
+    else:
+        print("WARNING: FMI2 standard headers not found. Compilation may fail.")
 
     return include_dirs
 
