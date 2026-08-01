@@ -25,11 +25,12 @@
         "get_workitem_hierarchy",
         "create_workitem",
         "link_workitems",
-        "discover_work_item_types"
+        "discover_work_item_types",
+        "get_project_types"
       ]
     },
     "matlab": {
-      "command": "matlab-mcp-core-server",
+      "command": "/Users/levkent/dev/matlab/matlab-mcp-core-server",
       "args": [
         "--matlab-root=/Applications/MATLAB_R2025b.app",
         "--extension-file=./simulink-agentic-toolkit/tools/tools.json"
