@@ -11,6 +11,22 @@ This project demonstrates an end-to-end automotive development workflow where:
 3. **FMU export** packages models as Functional Mock-up Units for co-simulation and deployment
 4. **Traceability** links requirements → models → tests across the toolchain
 
+## Architecture
+
+![Automotive MIL/SIL/HIL Agent Workflow](docs/automotive-mil-sil-hil-workflow.png)
+
+The diagram shows the end-to-end flow orchestrated by Kiro on the developer workstation:
+
+1. **Requirements retrieval** — Kiro pulls system requirements and test cases from Polarion ALM (or reads local sample requirements)
+2. **Model creation** — MATLAB/Simulink builds a model implementing the required behavior
+3. **FMU export** — The model is exported as a source-code FMU (FMI 2.0 Co-Simulation)
+4. **Infrastructure provisioning** — An EC2 instance running ecu.test is provisioned via CloudFormation
+5. **Workspace sync** — Configurations, parameters, and the source-only FMU are uploaded to the remote instance
+6. **FMU compilation** — The C sources are compiled for linux64 on the EC2 instance using gcc
+7. **Test package creation** — Requirements are decomposed into precondition/action/postcondition steps and written as ecu.test packages
+8. **AI test generation** — ecu.test's AI agent generates executable test scripts from the packages
+9. **Test execution & reporting** — Tests run against the live FMU simulation; results are analyzed and reported back to the developer
+
 ## Prerequisites
 
 ### macOS C Compiler (Xcode)
