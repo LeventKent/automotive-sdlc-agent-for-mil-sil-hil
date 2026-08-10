@@ -30,6 +30,7 @@
       ]
     },
     "matlab": {
+      "_comments_": "REPLACE below line with your path",
       "command": "/Users/levkent/dev/matlab/matlab-mcp-core-server",
       "args": [
         "--matlab-root=/Applications/MATLAB_R2025b.app",

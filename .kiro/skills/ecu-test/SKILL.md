@@ -1,3 +1,14 @@
+---
+name: ecu-test
+description: >
+  Comprehensive skill for automating ecu.test — start the application, create test packages from
+  requirements, generate test scripts via AI, execute tests, and analyze test reports.
+  Use this skill when the user mentions ecu.test, ECU-TEST, test generation, test execution,
+  test packages, TRF reports, TCF/TBC configuration, or any end-to-end test workflow involving
+  ecu.test. Covers: starting ECU-TEST, creating packages, generating scripts, executing tests,
+  and analyzing results.
+---
+
 # ecu.test Automation Skill
 
 Comprehensive CLI-driven automation for ecu.test — create packages, generate test scripts,
