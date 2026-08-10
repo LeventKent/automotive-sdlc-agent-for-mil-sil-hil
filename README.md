@@ -104,64 +104,73 @@ Connects to Polarion for requirements management and traceability.
    - `POLARION_TOKEN` — Personal access token
    - `POLARION_CONFIG_PATH` — Path to project config YAML
 
-## Session Workflow (Reproduced Steps)
+## Session Workflow
 
-This section documents the exact workflow performed in the initial session:
+This section documents the typical end-to-end workflow. The project is **requirement-agnostic** — it works with any set of requirements, whether retrieved from Polarion or provided as local markdown files.
 
 ### 1. Validate Toolchain Connectivity
 
 ```
-- Verified MATLAB MCP server connection via detect_matlab_toolboxes
-- Confirmed Simulink, Simulink Coder, Simulink Compiler, Embedded Coder available
-- Verified Polarion MCP server connection via health_check and list_projects
+- Verify MATLAB MCP server connection via detect_matlab_toolboxes
+- Confirm Simulink, Simulink Coder, Simulink Compiler, Embedded Coder available
+- Verify Polarion MCP server connection (if using Polarion for requirements)
 ```
 
-### 2. Retrieve Requirements from Polarion
+### 2. Retrieve or Load Requirements
 
+**Option A — From Polarion ALM:**
 ```
-- Listed all work items in project TEMPMON004
-- Retrieved TM-509: "Temperature Monitoring System" (top-level system requirement)
-- Retrieved child requirements: TM-510 through TM-514 (SWE.2 architectural modules)
+- Connect via Polarion MCP server
+- Query work items (system requirements, test cases)
+- Use requirement descriptions to drive model creation
 ```
 
-### 3. Create Simulink Model from TM-509
+**Option B — From local markdown files (no Polarion access needed):**
+```
+- Read requirements from sample-requirements/
+- Sample requirements (TM-601..TM-605) are provided for a thermal monitoring use case
+- Replace or extend these with your own requirements
+```
 
-The model `TemperatureMonitoringSystem.slx` was created with 5 subsystems mapping to Polarion requirements:
+### 3. Create Simulink Model from Requirements
 
-| Subsystem | Polarion ID | Description |
-|-----------|-------------|-------------|
-| Sensor Interface | TM-510 | Simulated temperature sensor (sine + noise) |
-| Threshold Monitor | TM-511 | High/low threshold evaluation with alarm output |
-| Alert Dispatcher | TM-512 | Priority-weighted alert signal generation |
-| Data Logger | TM-513 | Ring buffer simulation via unit delay |
-| Application Task | TM-514 | Periodic task scheduler (clock + pulse generator) |
+Using the MATLAB MCP tools, create a Simulink model that implements the behavior described in the requirements. The model should:
+- Use fixed-step discrete solver (required for FMU export)
+- Expose output signals as Outport blocks matching the signal names referenced in test cases
+- Be saved to `matlab-models/`
 
-**Model parameters:**
-- Solver: Fixed-step discrete
-- Step size: 0.1s
-- Stop time: 10s
-- Thresholds: High > 70°C, Low < 10°C
-
-### 4. Run Simulation
+### 4. Export as FMU and Deploy to Remote
 
 ```matlab
-simOut = sim('TemperatureMonitoringSystem', 'StopTime', '10');
-```
-
-**Results:**
-- Temperature range: 23–80°C (mean ~54°C)
-- Alert events: 24 out of 101 samples (high threshold breaches)
-
-### 5. Export as FMU
-
-```matlab
-exportToFMU('TemperatureMonitoringSystem', ...
+exportToFMU('<ModelName>', ...
     'FMIVersion', '2.0', ...
     'FMUType', 'CS', ...
-    'SaveDirectory', fullfile(pwd, 'fmu_export'));
+    'SaveSourceCodeToFMU', 'on', ...
+    'SaveDirectory', '<workspace>/ecu.test-integration/ecu.test_agent_fmu_demo/fmu');
 ```
 
-Produces `TemperatureMonitoringSystem.fmu` — an FMI 2.0 Co-Simulation unit.
+Then sync and compile on the remote:
+```bash
+./scripts/ecu-test-adapter.sh --sync
+ssh <remote> "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py <ModelName>.fmu"
+```
+
+### 5. Create Packages, Generate Scripts, Execute Tests
+
+Using the ecu.test skill:
+```bash
+# Create test packages from requirement steps
+./scripts/ecu-test-adapter.sh create_package.py --pre-step "..." --action-step "..." --post-step "..." --output "/opt/ecu-test-workspace/Packages/<test>.pkg"
+
+# Generate AI test scripts
+./scripts/ecu-test-adapter.sh generate.py --tcf "fmu.tcf" --package "/opt/ecu-test-workspace/Packages/<test>.pkg"
+
+# Execute
+./scripts/ecu-test-adapter.sh execute.py --test-case "/opt/ecu-test-workspace/Packages/<test>.pkg" --tbc "fmu.tbc" --tcf "fmu.tcf"
+
+# Analyze report
+./scripts/ecu-test-adapter.sh report.py --report-path "/opt/ecu-test-workspace/TestReports/<test>_<date>/<test>.trf"
+```
 
 ## Project Structure
 
@@ -190,7 +199,8 @@ Produces `TemperatureMonitoringSystem.fmu` — an FMI 2.0 Co-Simulation unit.
 │   │   ├── Parameters/FMU/         # XAM signal mapping
 │   │   ├── fmu/                    # FMU model files
 │   │   └── Packages/               # Generated test packages
-│   └── requirements/               # Test case requirements (TM-601..TM-605)
+│   └── reports/                    # Test execution reports (gitignored)
+├── sample-requirements/            # Sample test case requirements (TM-601..TM-605)
 ├── infra/
 │   └── ecu-test-ec2.yaml           # CloudFormation template for remote EC2
 ├── polarion-integration/
