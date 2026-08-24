@@ -24,22 +24,22 @@ Parameters:
     Type: String
     Description: URL to the ECU_TEST .deb package for download and installation
 
-Mappings:
-  RegionAMI:
-    us-east-1:
-      AMI: ami-0f9de6e2d2f067fca
-    us-east-2:
-      AMI: ami-0ccabb5f82d4c9af5
-    us-west-1:
-      AMI: ami-0cbd40f694b804622
-    us-west-2:
-      AMI: ami-03c983f9003cb9cd1
-    eu-west-1:
-      AMI: ami-0694d931cee176e7d
-    eu-central-1:
-      AMI: ami-0faab6bdbac9486fb
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
+    Description: SSM parameter path for Ubuntu 22.04 AMI (auto-resolves to latest)
 
 Resources:
+  WaitConditionHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+
+  WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: EC2Instance
+    Properties:
+      Handle: !Ref WaitConditionHandle
+      Timeout: '600'
+
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -55,7 +55,7 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyPairName
-      ImageId: !FindInMap [RegionAMI, !Ref 'AWS::Region', AMI]
+      ImageId: !Ref LatestAmiId
       SecurityGroupIds:
         - !GetAtt SecurityGroup.GroupId
       BlockDeviceMappings:
@@ -70,8 +70,15 @@ Resources:
           set -e
           exec > /var/log/ecu-test-init.log 2>&1
 
+          # Signal failure to CloudFormation on any error
+          trap 'cfn-signal -e 1 --reason "UserData script failed" --url "${WaitConditionHandle}" 2>/dev/null || true' ERR
+
           apt-get update
           apt-get install -y python3-pip python3-setuptools software-properties-common build-essential
+
+          # Install aws-cfn-bootstrap for cfn-signal
+          apt-get install -y python3-pip
+          pip3 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
 
           # Install Python 3.11 and requests
           add-apt-repository -y ppa:deadsnakes/ppa
@@ -101,6 +108,9 @@ Resources:
           chmod 777 /opt/ecu-test-workspace
 
           echo "ECU-TEST init complete" >> /var/log/ecu-test-init.log
+
+          # Signal success to CloudFormation
+          cfn-signal -e 0 --reason "UserData completed successfully" --url "${WaitConditionHandle}"
 
 Outputs:
   InstancePublicIp:

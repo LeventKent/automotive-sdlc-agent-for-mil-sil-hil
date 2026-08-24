@@ -125,6 +125,8 @@ The `--sync` command uploads the local `fmu/` directory to the remote, which **o
 
 The AI test script generator interprets natural language steps literally. Certain phrases cause it to emit broken code.
 
+> **Note:** For project-specific signal names and threshold values, activate the `#ecu-test-project-config` steering.
+
 ### NEVER use these phrases in package steps:
 
 | Forbidden phrase | Why it fails |

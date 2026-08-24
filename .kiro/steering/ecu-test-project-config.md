@@ -4,6 +4,8 @@ inclusion: manual
 
 # ECU-TEST Project Configuration — Temperature Monitoring Demo
 
+> **For operational procedures (sync, compile, restart), see the ecu-test skill.**
+
 This steering file contains project-specific knowledge for the Temperature Monitoring System
 FMU demo. It supplements the generic ecu-test skill with signal names, thresholds, and
 phrasing guidance specific to this model.
@@ -77,27 +79,6 @@ This decouples the scripts from the specific installed version. If the instance 
 
 ```bash
 sudo ln -sfn /opt/ecu.test-2026.1 /opt/ecu.test
-```
-
-## FMU Compilation on Remote
-
-After `--sync`, compile the source-only FMU on the remote:
-
-```bash
-ssh -i "$KEY" ubuntu@$HOST "cd /opt/ecu-test-workspace/fmu && python3 compile_fmu.py"
-```
-
-Then restart the configuration:
-
-```bash
-ssh -i "$KEY" ubuntu@$HOST 'curl -s -X PUT -H "Content-Type: application/json" \
-  -d "{\"action\":\"Stop\",\"tbc\":{\"tbcPath\":\"fmu.tbc\"},\"tcf\":{\"tcfPath\":\"fmu.tcf\"}}" \
-  http://127.0.0.1:5050/api/v2/configuration'
-sleep 5
-ssh -i "$KEY" ubuntu@$HOST 'curl -s -X PUT -H "Content-Type: application/json" \
-  -d "{\"action\":\"Start\",\"tbc\":{\"tbcPath\":\"fmu.tbc\"},\"tcf\":{\"tcfPath\":\"fmu.tcf\"}}" \
-  http://127.0.0.1:5050/api/v2/configuration'
-sleep 15
 ```
 
 ## Polarion Traceability

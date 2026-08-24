@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Build FMU on remote EC2 instance
+# -----------------------------------------------------------------------
+# Standalone convenience script for compiling FMU on remote.
+# For the full workflow, use ecu-test-adapter.sh --sync then compile.
+# -----------------------------------------------------------------------
 set -euo pipefail
 
 CONFIG_FILE=".ecu-test-remote.json"

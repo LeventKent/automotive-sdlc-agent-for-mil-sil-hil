@@ -1,0 +1,318 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Remove JWT tokens and hardcoded paths from root MCP config": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557271812
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557282359
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557412135
+      }
+    ],
+    "2. Create `.env.example` and delete duplicate MCP config": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557271893
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557283054
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557413074
+      }
+    ],
+    "3. Merge fmu-build-requirement into matlab-simulink-setup": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557271937
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557418810
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557573300
+      }
+    ],
+    "4. Reduce session-setup-checklist to verification-only": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557271967
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557419597
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557574246
+      }
+    ],
+    "5. Clean ecu-test-project-config (remove operational duplication)": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557271997
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557420569
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557575369
+      }
+    ],
+    "6. Update ecu-test SKILL.md with cross-references": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272026
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557421577
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557577880
+      }
+    ],
+    "7. Verify MATLAB skills against simulink-agentic-toolkit source": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272057
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557583474
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558033359
+      }
+    ],
+    "8. Create skill architecture documentation": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272087
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557584385
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558031249
+      }
+    ],
+    "9. Update architecture-prompt.md status": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272110
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557585304
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558029518
+      }
+    ],
+    "10. Update remote-ecu-test-execution spec task status": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272137
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557586237
+      }
+    ],
+    "11. Document build_fmu_remote.sh purpose": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272170
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557587157
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558030335
+      }
+    ],
+    "12. Organize example/demo files": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272198
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558039893
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558112649
+      }
+    ],
+    "13. Add WaitCondition and error handling to CloudFormation template": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272241
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558118196
+      }
+    ],
+    "14. Replace hardcoded AMI mappings with SSM parameter": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272290
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558119016
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558255405
+      }
+    ],
+    "15. Clean up polarion-integration nested .kiro": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272319
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558119932
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558256537
+      }
+    ],
+    "16. Fix README project structure and add steering guide": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272348
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558263288
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558524320
+      }
+    ],
+    "17. Add directory documentation": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272380
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558264043
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558523449
+      }
+    ],
+    "18. Review .gitignore coverage": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272418
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558264902
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558526176
+      }
+    ],
+    "19. Create setup verification script": [
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787557272451
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558265816
+      },
+      {
+        "executionId": "fc2b7bd9-4a0e-4631-9831-8e03a252fcd3",
+        "chatSessionId": "sess_0ab00992-fd01-4099-9bfa-9283f7fdf705",
+        "timestamp": 1787558525287
+      }
+    ]
+  }
+}
