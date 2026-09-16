@@ -1,12 +1,6 @@
 ---
 name: ecu-test
-description: >
-  Comprehensive skill for automating ecu.test — start the application, create test packages from
-  requirements, generate test scripts via AI, execute tests, and analyze test reports.
-  Use this skill when the user mentions ecu.test, ECU-TEST, test generation, test execution,
-  test packages, TRF reports, TCF/TBC configuration, or any end-to-end test workflow involving
-  ecu.test. Covers: starting ECU-TEST, creating packages, generating scripts, executing tests,
-  and analyzing results.
+description: Create, generate, execute, and analyze ecu.test packages. Use for ECU-TEST automation, TCF/TBC configuration, FMU-based test execution, and TRF report analysis.
 ---
 
 # ecu.test Automation Skill
@@ -102,6 +96,25 @@ All scripts are invoked through the adapter, which handles local/remote routing 
 10. **Never use simulation-lifecycle or variable-storage language in package steps** — the AI script generator will emit broken code. See [Test Step Phrasing Rules](#test-step-phrasing-rules).
 11. **Remote scripts are auto-provisioned** — the adapter automatically uploads scripts from `.kiro/skills/ecu-test/scripts/remote/` to the configured `remote_scripts_dir` on the remote instance before the first remote execution. Run `--ensure-scripts` to force a re-check.
 12. **Never invoke SSH directly to work around the adapter** — the adapter handles SSH key path resolution, permission fixes, and remote script provisioning. Always use the adapter for all remote operations.
+13. **Cleanup and reset are destructive** — `cleanup_ecu_test_reports.py` deletes prior report artifacts, while `reset_ecu_test_remote.py` deletes them, stops ECU-TEST, and removes deployed remote scripts. Run either only after the user explicitly requests the action; both preserve an optional `TestReports/.keep` placeholder.
+
+## Remote Environment Cleanup (Explicit Request Only)
+
+Do **not** clean or reset ECU-TEST as part of the normal startup, FMU deployment, or test-execution workflow. Invoke either script only when the user explicitly asks for cleanup or reset.
+
+- For a request such as “clean up prior ECU-TEST reports” or “delete test reports,” remove only report artifacts and leave ECU-TEST running:
+
+  ```bash
+  ./scripts/ecu-test-adapter.sh cleanup_ecu_test_reports.py
+  ```
+
+- For a request such as “reset ECU-TEST” or “stop and clean the test environment,” delete report artifacts, stop the remote `ecu.test_runner` process, and remove all deployed remote adapter scripts. The next adapter invocation provisions fresh local copies:
+
+  ```bash
+  ./scripts/ecu-test-adapter.sh reset_ecu_test_remote.py
+  ```
+
+If the user has not clearly requested the selected destructive effect, explain the impact and obtain confirmation before running it.
 
 
 ## FMU Sync & Build Order
@@ -163,6 +176,8 @@ Instead of comparing two readings (which requires variable storage), use knowled
 
 | Capability | Script | Guide |
 |---|---|---|
+| Clean remote reports (explicit request only; destructive) | `scripts/remote/cleanup_ecu_test_reports.py` | Run via the adapter only after the user requests report cleanup |
+| Reset remote ECU-TEST (explicit request only; destructive) | `scripts/remote/reset_ecu_test_remote.py` | Run via the adapter only after the user requests reset |
 | Start ECU-TEST | `scripts/start.py` | [start.md](start.md) |
 | Create test package | `scripts/create_package.py` | [create-package.md](create-package.md) |
 | Generate test script (AI) | `scripts/generate.py` | [generate.md](generate.md) |
