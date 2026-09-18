@@ -1,0 +1,53 @@
+{
+  "mcpServers": {
+    "polarion": {
+      "_comment": "Polarion MCP server. Requires: (1) Clone polarion-mcp into ./polarion-integration/polarion-mcp and create venv, (2) Set POLARION_USER and POLARION_TOKEN env vars or create a .env file.",
+      "command": "./polarion-integration/polarion-mcp/.venv/bin/python",
+      "args": [
+        "-m",
+        "mcp_server.main_stdio"
+      ],
+      "env": {
+        "POLARION_URL": "https://testdrive.polarion.com/polarion",
+        "POLARION_USER": "${POLARION_USER}",
+        "POLARION_TOKEN": "${POLARION_TOKEN}",
+        "POLARION_CONFIG_PATH": "./polarion-integration/temp-monitor/polarion_config.yaml"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "health_check",
+        "list_projects",
+        "get_project_info",
+        "search_workitems",
+        "get_workitem",
+        "get_workitem_hierarchy",
+        "create_workitem",
+        "link_workitems",
+        "discover_work_item_types",
+        "get_project_types"
+      ]
+    },
+    "matlab": {
+      "_comment": "MATLAB MCP server. Requires: (1) Install matlab-mcp-core-server binary or symlink it into project root, (2) Clone simulink-agentic-toolkit into project root. Adjust --matlab-root to match your MATLAB installation path.",
+      "command": "./matlab-mcp-core-server",
+      "args": [
+        "--matlab-root=/Applications/MATLAB_R2026a.app",
+        "--extension-file=./simulink-agentic-toolkit/tools/tools.json"
+      ],
+      "autoApprove": [
+        "evaluate_matlab_code",
+        "run_matlab_file",
+        "run_matlab_test_file",
+        "check_matlab_code",
+        "detect_matlab_toolboxes",
+        "model_overview",
+        "model_read",
+        "model_query_params",
+        "model_resolve_params",
+        "model_edit",
+        "model_test"
+      ],
+      "disabled": false
+    }
+  }
+}

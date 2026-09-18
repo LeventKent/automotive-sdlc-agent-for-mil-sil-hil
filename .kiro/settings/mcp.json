@@ -28,11 +28,13 @@
       ]
     },
     "matlab": {
-      "_comment": "MATLAB MCP server. Requires: (1) Install matlab-mcp-core-server binary or symlink it into project root, (2) Clone simulink-agentic-toolkit into project root. Adjust --matlab-root to match your MATLAB installation path.",
-      "command": "./matlab-mcp-core-server",
+      "_comment": "MATLAB MCP server. The matlab-mcp-server binary is installed by the Simulink Agentic Toolkit at ~/.matlab/agentic-toolkits/bin/matlab-mcp-server. --matlab-session-mode=auto connects to a shared MATLAB session if one exists (run satk_initialize in MATLAB), otherwise starts its own. --extension-file loads the Simulink toolkit's model tools. Adjust --matlab-root to your MATLAB install.",
+      "command": "/Users/oesgul/.matlab/agentic-toolkits/bin/matlab-mcp-server",
       "args": [
         "--matlab-root=/Applications/MATLAB_R2026a.app",
-        "--extension-file=./simulink-agentic-toolkit/tools/tools.json"
+        "--matlab-session-mode=auto",
+        "--matlab-display-mode=nodesktop",
+        "--extension-file=/Users/oesgul/CodeProjects/Automotive-SDLC-Agent/automotive-sdlc-agent-for-mil-sil-hil/simulink-agentic-toolkit/tools/tools.json"
       ],
       "autoApprove": [
         "evaluate_matlab_code",
