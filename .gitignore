@@ -176,3 +176,5 @@ ecu.test-integration/reports/*.md
 
 # Session summaries (generated per session)
 session-summary*
+# Kiro spec working files (generated during spec-driven development)
+.kiro/specs/
