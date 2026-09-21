@@ -1,58 +1,55 @@
 ---
 inclusion: auto
-name: Project End-to-End Development Steering
-description: Auto-included guidance for running the full MIL/SIL/HIL project workflow — from creating a Simulink model that satisfies requirements, through source-only FMU export, remote transfer and compilation, ECU-TEST package/script generation, test execution, and a summary report.
+name: Model in the loop software development flow
+description: Software development flow to implement and test models using model-in-the-loop based on given requirements.
 ---
 
 # End-to-End Development
 
 ## Overview
 
-This steering file is the single source of truth for how to run this project's
-MIL/SIL/HIL development workflow. Because it uses `inclusion: auto`, it loads
-automatically whenever you ask to run the project — you do not need to manually
-activate any other steering files.
+This steering file defines a reusable MIL/SIL/HIL development workflow. Because
+it uses `inclusion: auto`, it loads automatically whenever you ask to run a
+model-in-the-loop project.
 
-The file is organized as two layers:
+Before starting Phase 1, resolve a runtime project context from, in priority
+order: values supplied by the user; the referenced requirements; the current
+workspace's `.ecu-test-remote.json`, TCF, TBC, XAM, and Simulink model files; and
+a focused user question when a required value remains ambiguous. The context
+must provide the requirements source, workspace paths, model and FMU names,
+TBC/TCF names, ECU-TEST model key, signal mappings, thresholds, and traceability
+needed by the requested phases. Derive expected behavior and thresholds from the
+requirements rather than examples or generated artifacts. Do not print
+credentials, license values, tokens, or private keys while resolving the
+context.
 
-- **Reusable layer** — the ordered End-to-End Workflow phases plus the reference
-  material (MATLAB/Simulink setup, session pre-flight checklist, and skill
-  references). This layer describes *how the project runs* without hardcoding any
-  single model's values. When a phase needs a concrete value (a signal name, a
-  threshold, a traceability mapping), it points you to the Project Instance
-  section rather than embedding the value inline.
-- **Replaceable Project Instance section** — a single, clearly-marked section
-  holding every model-specific value for the current project (the Temperature
-  Monitoring System example: its signals, thresholds, remote instance details,
-  and Polarion traceability). Swap this one section to re-target the entire
-  workflow to a different model without touching the reusable layer.
+To run a project, follow the ordered **End-to-End Workflow** below phase by
+phase. Whenever a phase refers to a concrete model value, use the resolved
+runtime project context; do not hardcode project-specific values in this file.
+If a required value cannot be resolved unambiguously, ask the user for that
+value before starting a dependent phase.
 
-To run the project, follow the ordered **End-to-End Workflow** below phase by
-phase. Whenever a phase refers to a concrete model value, look it up in the
-**Project Instance section** at the end of this file — that section is the only
-place model-specific values live, and it is the only section you replace when
-adapting the project to a new model.
 ## End-to-End Workflow
 
 Run the project by working through the following phases in order. Each phase
 names the artifact it consumes (**Input**) and the artifact it produces
 (**Produced artifact**). A later phase's input is the previous phase's produced
-artifact, so the sequence must be followed top to bottom. For any concrete model
-value a phase refers to, look it up in the **Project Instance section** at the
-end of this file.
+artifact, so the sequence must be followed top to bottom. Use the resolved
+**runtime project context** for every concrete model value referenced by a
+phase.
 
 ### Phase 1: Create Simulink Model from Requirements
 
-- **Input:** the requirements in `ecu.test-integration/requirements/`.
+- **Input:** the requirements given by the user via prompt (ex: `requirements in sample-requirements`).
 - **Produced artifact:** a Simulink model that satisfies those requirements.
 
-Read every requirement in the requirements directory and build a Simulink model
+Read every requirement and build a Simulink model
 that satisfies them. Follow the `building-simulink-models` skill for the model
 construction procedure. Where the work involves the physical/environment plant
 portion of the model, follow the `specifying-plant-models` skill; where it
 involves the control or monitoring algorithm (model-based design) portion,
 follow the `specifying-mbd-algorithms` skill. Use the base model name and other
-concrete model details from the Project Instance section — do not invent or
+concrete model details from the runtime project context — do not invent or
 hardcode them here.
 
 ### Phase 2: Export Source-Only FMU
@@ -66,7 +63,7 @@ FMU ships source rather than a pre-built binary. This is a source-only FMU that
 is compiled later on the remote (Phase 4). For the toolbox/support-package
 prerequisites, the FMU naming convention, and the mandatory always-build-fresh
 policy, see the **MATLAB/Simulink Setup** section of this file. Take the base
-model name from the Project Instance section.
+model name from the runtime project context.
 
 ### Phase 3: Transfer FMU to Remote ECU-TEST Instance
 
@@ -80,7 +77,7 @@ transfer succeeded before proceeding: verify that the synced FMU is present at
 its expected location on the remote instance (the `--sync` operation reports the
 transferred files, and the FMU must be listed and present remotely). Do not
 start Phase 4 until the FMU's presence on the remote is confirmed. Use the
-remote workspace location from the Project Instance section.
+remote workspace location from the runtime project context.
 
 ### Phase 4: Compile FMU on Remote
 
@@ -91,20 +88,20 @@ remote workspace location from the Project Instance section.
 Compile the transferred source-only FMU on the remote instance using
 `compile_fmu.py`, following the `ecu-test` skill. This turns the source-only FMU
 into a compiled FMU with a native binary that ECU-TEST can execute. Use the base
-model name from the Project Instance section so the compiled shared library
+model name from the runtime project context so the compiled shared library
 matches the FMU naming convention described in the **MATLAB/Simulink Setup**
 section.
 
 ### Phase 5: Create Test Packages from Requirements
 
-- **Input:** the requirements in `ecu.test-integration/requirements/`.
+- **Input:** the same requirements resolved at runtime and used in Phase 1.
 - **Produced artifact:** the ECU-TEST test packages.
 
 Read every requirement in the requirements directory and create ECU-TEST test
 packages that exercise them, following the `ecu-test` skill. Each package maps
 requirement behavior to test steps (preconditions, stimuli, and postconditions).
 Take the concrete signal names, thresholds, precondition/postcondition phrasing
-patterns, and traceability mappings from the Project Instance section — do not
+patterns, and traceability mappings from the runtime project context — do not
 embed model-specific values here.
 
 ### Phase 6: Generate Test Scripts
@@ -115,8 +112,8 @@ embed model-specific values here.
 Generate the executable test scripts for the test packages, following the
 `ecu-test` skill. Each test package yields one or more runnable test scripts that
 ECU-TEST drives against the compiled FMU in the next phase. Use the workspace
-location and configuration details (TBC, TCF, model key) from the Project
-Instance section.
+location and configuration details (TBC, TCF, model key) from the runtime
+project context.
 
 ### Phase 7: Execute Tests
 
@@ -131,7 +128,7 @@ checked. Run **every** generated test script — do not skip any. Each script ru
 against the freshly compiled FMU from Phase 4; if the compiled FMU or the
 ECU-TEST configuration was changed, restart the configuration first so the run
 uses the current binary. Use the workspace, configuration, and signal details
-from the Project Instance section.
+from the runtime project context.
 
 ### Phase 8: Produce Summary Report
 
@@ -182,7 +179,7 @@ workflow: the toolboxes and support package you need, how MATLAB MCP tools resol
 paths, how the MCP server is configured per operating system, the FMU naming
 convention, and the mandatory always-build-fresh FMU policy with its ordered
 build sequence. Concrete model values (the base model name, the workspace
-location) live in the **Project Instance section** — this section references that
+location) live in the **runtime project context** — this section references that
 name concept but never hardcodes it.
 
 ### Required Toolboxes and Support Package
@@ -293,7 +290,7 @@ must be used consistently across every artifact. All of the following share one
 
 To control the FMU filename, set the Simulink model name to that base model name
 (or rename the exported `.fmu` after export). The concrete base model name for
-the current project is given in the **Project Instance section** — take it from
+the current project is given in the **runtime project context** — take it from
 there rather than hardcoding it here.
 
 ### FMU Build Policy — Mandatory Always Build Fresh
@@ -335,7 +332,7 @@ build sequence for the project; the End-to-End Workflow phases reference it.
    | `FMIVersion` | `'2.0'` | FMI 2.0 Co-Simulation (required by ecu.test) |
    | `FMUType` | `'CS'` | Co-Simulation (not Model Exchange) |
    | `BuildConfiguration` | `'source-code'` | Generates C sources only, no compilation |
-   | `SaveDirectory` | project FMU directory | Where the `.fmu` is saved (see Project Instance section) |
+   | `SaveDirectory` | project FMU directory | Where the `.fmu` is saved (see runtime project context) |
 
 3. **Sync the workspace to the remote** using the `ecu-test` skill (`--sync`),
    so the source-only FMU is transferred to the remote instance.
@@ -357,7 +354,7 @@ only confirm readiness — for the underlying setup details (toolboxes, support
 package, MCP configuration) see the **MATLAB/Simulink Setup** section rather than
 repeating them here. Where a check needs a concrete model value (a workspace
 location, the base model name, a configuration file, remote connection details),
-take it from the **Project Instance section** — this checklist never hardcodes
+take it from the **runtime project context** — this checklist never hardcodes
 model-specific values.
 
 ### MATLAB Checks
@@ -372,7 +369,7 @@ model-specific values.
 
 Run these against the remote instance over SSH. Take the connection details (key
 path, user, host) and the concrete workspace paths, configuration file names, and
-base model name from the **Project Instance section**; the placeholders below
+base model name from the **runtime project context**; the placeholders below
 stand in for those values.
 
 | Check | How to verify | Expected pass indicator |
@@ -403,8 +400,8 @@ When a pre-flight check fails, route to the authoritative source for the fix:
   workspace, compiled FMU, symlink) → follow the `ecu-test` skill for the
   install, start, sync, compile, and restart procedures.
 - **Model-detail check failures** (a wrong workspace path, configuration file,
-  base model name, or other concrete value) → see the **Project Instance
-  section** of this file, the single place those values are defined.
+  base model name, or other concrete value) → resolve the value again using the
+  runtime project context rules in the Overview.
 
 ## Skill References
 
@@ -433,95 +430,3 @@ Whenever a workflow phase, the pre-flight checklist, or the remediation routing
 points to an ECU-TEST operational step, follow the `ecu-test` skill rather than
 duplicating those procedures elsewhere in this file.
 
-## Project Instance section
-
-<!-- PROJECT_INSTANCE_SECTION — REPLACEABLE -->
-
-> **REPLACEABLE SECTION.** This is the *only* place in this file that holds
-> model-specific values. Everything above (the End-to-End Workflow, MATLAB/Simulink
-> Setup, Session Pre-Flight Checklist, and Skill References) is the reusable layer
-> and must stay model-agnostic. To re-target the entire workflow to a different
-> model, replace **only** this section — see the **Replacing this section for a
-> different model** note at the end.
-
-The current project instance is the **Temperature Monitoring System** FMU demo.
-The values below are the single source of truth wherever a workflow phase, the
-pre-flight checklist, or a reference section refers to a concrete model value.
-
-### Model Details
-
-- **Model name**: `TemperatureMonitoringSystem` — the identical base model name
-  shared by the Simulink model, the exported `.fmu`, the `modelIdentifier` in
-  `modelDescription.xml`, the compiled `binaries/linux64/` shared library, and the
-  TCF `MODEL-FILE` (see the FMU Naming Convention in the MATLAB/Simulink Setup
-  section).
-- **FMU type**: FMI 2.0 Co-Simulation.
-- **Model key in ecu.test**: `Plant model`.
-- **TBC**: `fmu.tbc`.
-- **TCF**: `fmu.tcf`.
-- **Workspace**: `ecu.test-integration/ecu.test_agent_fmu_demo/`.
-
-### Signals
-
-| Signal | Unit | Min | Max |
-|---|---|---|---|
-| `Plant model.TemperatureOut` | mC (milli-Celsius) | 0 | 125000 |
-| `Plant model.AlertOut` | — | 0 | non-zero |
-| `Plant model.SensorStatus` | — | 0 | 1 |
-
-### Thresholds
-
-- **High temperature threshold**: 80000 mC.
-- **Low temperature threshold**: 10000 mC.
-- **Initial temperature at t=0**: 20000 mC.
-
-### Test-Step Phrasing Patterns (exact-match strings)
-
-Use these exact strings when authoring test-step preconditions and postconditions
-for this model (Phases 5–7).
-
-**Preconditions:**
-
-- `Read signal Plant model.SensorStatus to confirm model is connected.`
-- `Read signal Plant model.TemperatureOut to confirm model is connected.`
-
-**Postconditions:**
-
-- `Verify TemperatureOut is between 0 and 125000 mC.`
-- `Verify AlertOut is not equal to 0.`
-- `Verify AlertOut equals 0.`
-- `Verify SensorStatus equals 1.`
-- `Verify TemperatureOut is greater than 20000.`
-
-### Remote Instance Details
-
-- **License**: referenced via the `license` field in `.ecu-test-remote.json`.
-- **ecu.test version**: `2026.1.x`.
-- **ApiClient symlink convention**: the remote scripts resolve the ApiClient from
-  the generic path `/opt/ecu.test/Templates/ApiClient/ApiClient.py`, which is
-  provided by the version-decoupling symlink `/opt/ecu.test → /opt/ecu.test-2026.1`.
-
-### Polarion Traceability
-
-| Test Case | Verifies Requirement |
-|---|---|
-| TM-601 | TM-511 |
-| TM-602 | TM-511 |
-| TM-603 | TM-511 |
-| TM-604 | TM-513 |
-| TM-605 | TM-514 |
-
-### Replacing this section for a different model
-
-When adapting this project to a different model, replace **only** this Project
-Instance section and leave the reusable layer above untouched. Update all of the
-following to match the new model:
-
-- the **model name** (and, with it, the FMU filename, `modelIdentifier`, compiled
-  shared library, and TCF `MODEL-FILE` — they must all stay identical),
-- the **signals** (names, units, and min/max ranges),
-- the **thresholds** (high, low, and initial values),
-- the **test-step phrasing patterns** (the exact precondition/postcondition strings),
-- the **remote instance details** (license reference, ecu.test version, ApiClient
-  symlink), and
-- the **Polarion traceability** mappings (test case → requirement).

@@ -146,7 +146,7 @@ notebooks/evaluation_results*
 
 # ECU-TEST remote config (contains SSH credentials)
 .ecu-test-remote.json
-
+license.lic
 # Matlab
 simulink-agentic-toolkit/
 
