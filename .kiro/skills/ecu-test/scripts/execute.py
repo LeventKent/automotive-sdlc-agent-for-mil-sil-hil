@@ -22,6 +22,7 @@ import time
 import urllib.request
 import urllib.error
 from dataclasses import dataclass
+from pathlib import Path
 
 from configure_tcf import configure_tcf
 
@@ -31,6 +32,7 @@ class ExecutionResult:
     success: bool
     message: str
     test_report_id: str = ""
+    test_report_path: str = ""
     result_raw: dict | None = None
 
 
@@ -39,6 +41,7 @@ class WorkflowResult:
     success: bool
     message: str
     test_report_id: str = ""
+    test_report_path: str = ""
     result_raw: dict | None = None
 
 
@@ -119,6 +122,35 @@ def get_execution_status(port: int) -> dict | None:
     if status == 200:
         return data
     return None
+
+
+def _report_directory_for_test_case(test_case: str) -> Path:
+    """Infer the workspace TestReports directory from a workspace Packages path."""
+    package_path = Path(test_case)
+    return package_path.parent.parent / "TestReports"
+
+
+def wait_for_report_path(
+    test_case: str,
+    execution_started_at: float,
+    timeout: int = 30,
+) -> str:
+    """Return the newly generated TRF path for a completed package, if available."""
+    reports_dir = _report_directory_for_test_case(test_case)
+    package_name = Path(test_case).stem
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        candidates = [
+            report
+            for report in reports_dir.glob(f"{package_name}_*/*.trf")
+            if report.is_file() and report.stat().st_mtime >= execution_started_at - 5
+        ]
+        if candidates:
+            return str(max(candidates, key=lambda report: report.stat().st_mtime))
+        time.sleep(1)
+
+    return ""
 
 
 def _extract_result(execution: dict) -> tuple[str, dict]:
@@ -202,6 +234,7 @@ def execute_test_case(
         print(f"Port     : {port}")
         print()
 
+    execution_started_at = time.time()
     ok, msg = start_execution(port, test_case, retry_timeout=120, verbose=verbose)
     if not ok:
         return ExecutionResult(success=False, message=msg)
@@ -209,7 +242,13 @@ def execute_test_case(
     if verbose:
         print(f"Execution request accepted. Waiting up to {exec_timeout}s for completion...")
 
-    return wait_for_execution(port, exec_timeout, verbose=verbose)
+    result = wait_for_execution(port, exec_timeout, verbose=verbose)
+    if result.success:
+        result.test_report_path = wait_for_report_path(
+            test_case,
+            execution_started_at,
+        )
+    return result
 
 
 def run_workflow(
@@ -261,13 +300,16 @@ def run_workflow(
 
     report_suffix = ""
     if exec_result.test_report_id:
-        report_suffix = f" Test Report ID: {exec_result.test_report_id}"
+        report_suffix += f" Test Report ID: {exec_result.test_report_id}"
+    if exec_result.test_report_path:
+        report_suffix += f" Report path: {exec_result.test_report_path}"
 
     if not exec_result.success:
         return WorkflowResult(
             success=False,
             message=f"Execution failed: {exec_result.message}{report_suffix}",
             test_report_id=exec_result.test_report_id,
+            test_report_path=exec_result.test_report_path,
             result_raw=exec_result.result_raw,
         )
 
@@ -310,6 +352,8 @@ def main():
 
     if result.test_report_id:
         print(f"Test Report ID: {result.test_report_id}")
+    if result.test_report_path:
+        print(f"Report path: {result.test_report_path}")
     if result.result_raw:
         print(f"Raw result: {json.dumps(result.result_raw, indent=2)}")
 

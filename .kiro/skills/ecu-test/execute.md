@@ -47,7 +47,7 @@ python scripts/execute.py \
 2. **Configure TBC + TCF** — Loads the test bench and test configuration via `PUT /api/v2/configuration` and polls until RUNNING.
 3. **Execute test case** — Triggers execution via `PUT /api/v2/execution` with the test case path.
 4. **Poll for completion** — Polls `GET /api/v2/execution` until FINISHED or timeout.
-5. **Report result** — Returns the test report ID and report directory on success, or an error message on failure.
+5. **Report result** — Returns the test report ID and the absolute generated `.trf` path on success, or an error message on failure.
 
 ## Using as a Python module
 
@@ -66,5 +66,5 @@ if result.success:
 ## Notes
 
 - ECU-TEST must already be running (use the start capability first).
-- The test report directory is printed on completion — use it with the report capability.
+- The absolute generated `.trf` path is printed on completion — pass it directly to the report capability.
 - ECU-TEST can only run one execution at a time. If busy, it returns HTTP 409.

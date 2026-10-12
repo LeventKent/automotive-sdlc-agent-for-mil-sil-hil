@@ -16,6 +16,7 @@ import sys
 import time
 import urllib.request
 import urllib.error
+from pathlib import Path
 
 from configure_tcf import check_api_reachable, start_configuration, wait_for_running, is_tcf_already_running
 
@@ -59,6 +60,34 @@ def start_execution(port: int, test_case_path: str, retry_timeout: int = 120) ->
             return False, msg
 
     return False, f"ECU-TEST remained busy for {retry_timeout}s"
+
+
+def report_directory_for_test_case(test_case_path: str) -> Path:
+    """Infer the workspace TestReports directory from a workspace Packages path."""
+    return Path(test_case_path).parent.parent / "TestReports"
+
+
+def wait_for_report_path(
+    test_case_path: str,
+    execution_started_at: float,
+    timeout: int = 30,
+) -> str:
+    """Return the newly generated TRF path for a completed package, if available."""
+    reports_dir = report_directory_for_test_case(test_case_path)
+    package_name = Path(test_case_path).stem
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        candidates = [
+            report
+            for report in reports_dir.glob(f"{package_name}_*/*.trf")
+            if report.is_file() and report.stat().st_mtime >= execution_started_at - 5
+        ]
+        if candidates:
+            return str(max(candidates, key=lambda report: report.stat().st_mtime))
+        time.sleep(1)
+
+    return ""
 
 
 def wait_for_execution(port: int, exec_timeout: int) -> tuple[bool, str, str]:
@@ -113,22 +142,30 @@ def main():
             sys.exit(1)
 
     # Step 2: Execute test case
+    execution_started_at = time.time()
     ok, msg = start_execution(args.port, args.test_case, retry_timeout=120)
     if not ok:
         print(f"ERROR: {msg}")
         sys.exit(1)
 
-    # Step 3: Wait for completion
+    # Step 3: Wait for completion and discover the generated TRF path.
     ok, msg, report_id = wait_for_execution(args.port, args.exec_timeout)
     if ok:
         summary = msg
         if report_id:
             summary += f" Report ID: {report_id}"
+        report_path = wait_for_report_path(args.test_case, execution_started_at)
+        if report_path:
+            summary += f" Report path: {report_path}"
+        else:
+            summary += " WARNING: Report path was not available within 30 seconds."
         print(f"SUCCESS: {summary}")
         sys.exit(0)
-    else:
-        print(f"ERROR: {msg}")
-        sys.exit(1)
+
+    print(f"ERROR: {msg}")
+    if report_id:
+        print(f"Test Report ID: {report_id}")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
