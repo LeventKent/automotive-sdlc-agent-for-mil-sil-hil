@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# Compile the FMU referenced by the configured ECU-TEST TCF and reload it remotely.
+# -----------------------------------------------------------------------
+# Standalone convenience script: compile the FMU referenced by the
+# configured ECU-TEST TCF on the remote and reload the configuration.
+# For the full workflow, use ecu-test-adapter.sh --sync then compile.
+# -----------------------------------------------------------------------
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -108,6 +112,15 @@ printf 'Compiling FMU referenced by %s: %s\n' "$TCF_NAME" "$FMU_FILE"
 ssh -i "$SECURE_KEY" -o ConnectTimeout=30 -o StrictHostKeyChecking=no \
     "${USER}@${HOST}" \
     "cd '$REMOTE_WORKSPACE/fmu' && python3 compile_fmu.py '$FMU_FILE'"
+
+# A configuration restart requires the ECU-TEST REST API. Compilation is still
+# complete when ECU-TEST is intentionally stopped or failed to start.
+if ! ssh -i "$SECURE_KEY" -o ConnectTimeout=30 -o StrictHostKeyChecking=no \
+    "${USER}@${HOST}" \
+    'curl -fsS http://127.0.0.1:5050/api/v2/live >/dev/null'; then
+    printf '\nECU-TEST API is not running; FMU compilation completed, so configuration restart is deferred.\n'
+    exit 0
+fi
 
 printf '\nRestarting ECU-TEST configuration: %s / %s\n' "$TBC_NAME" "$TCF_NAME"
 CONFIGURATION_URL="http://127.0.0.1:5050/api/v2/configuration"

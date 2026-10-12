@@ -1,5 +1,7 @@
 # Architecture Prompt
 
+> **Status: IMPLEMENTED** (as of 2026-07). See README.md for current operational details.
+
 ## Context
 
 I am building an agentic SDLC demo, where Kiro pulls requirements from a Polarion server using an MCP server. Then Kiro can use the MATLAB skill to create a Simulink model. Then Kiro uses a skill for ecu.test (a program which can define tests based on requirements and execute tests using a Matlab Simulink model exported as FMU) to start the ecu.test program locally, generate test steps (see generate.md), create tests (see create-package.md) and execute test (execute.md).

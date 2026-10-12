@@ -27,7 +27,41 @@ The diagram shows the end-to-end flow orchestrated by Kiro on the developer work
 8. **AI test generation** — ecu.test's AI agent generates executable test scripts from the packages
 9. **Test execution & reporting** — Tests run against the live FMU simulation; results are analyzed and reported back to the developer
 
+## Skills & MCP Architecture
+
+This project uses a two-layer architecture for AI assistance:
+
+- **MCP Servers** (execution layer) — provide raw tool capability (`model_edit`, `model_test`, `evaluate_matlab_code`, Polarion work item operations)
+- **Skills** (knowledge layer) — sit on top of MCP tools and provide workflow guidance, guardrails, and domain-specific rules for correct tool usage
+
+Seven skills are sourced from the [Simulink Agentic Toolkit](https://github.com/matlab/simulink-agentic-toolkit) (MathWorks upstream). One skill (`ecu-test`) is project-specific. Both the MCP server and the corresponding skills must be installed for the full workflow to function.
+
+For detailed classification, source attribution, and steering file documentation, see [docs/skill-architecture.md](docs/skill-architecture.md).
+
 ## Prerequisites
+
+This project supports two operational modes:
+
+| Mode | Local requirements | AWS/SSH needed? | Use case |
+|------|-------------------|-----------------|----------|
+| **Local-only** | MATLAB + Simulink + ecu.test installed locally | No | Full MIL workflow on a single machine |
+| **Remote** | MATLAB + Simulink locally | Yes | ecu.test on EC2; FMU compiled remotely on Linux |
+
+In **local-only mode**, you run ecu.test directly on your machine. The `.ecu-test-remote.json` file is not needed — the adapter defaults to local script execution. No AWS credentials or SSH keys are required.
+
+In **remote mode**, MATLAB stays local for model creation and FMU export (source-only), while ecu.test runs on a provisioned EC2 instance. You need AWS CLI, an SSH key, and a running EC2 instance (see `infra/ecu-test-ec2.yaml`). The `.ecu-test-remote.json` configures the connection.
+
+The MCP config (`.kiro/settings/mcp.json`) works identically in both modes — remote settings live exclusively in `.ecu-test-remote.json`.
+
+---
+
+Run the setup verification script to quickly check all prerequisites:
+
+```bash
+./scripts/verify-setup.sh
+```
+
+The script checks MATLAB, Simulink Agentic Toolkit, Python 3.11+, Polarion MCP venv, `.ecu-test-remote.json` (optional for local-only), and AWS CLI (optional for local-only), reporting PASS/FAIL/WARN for each.
 
 ### macOS C Compiler (Xcode)
 
@@ -195,7 +229,14 @@ Using the ecu.test skill:
 │   ├── settings/
 │   │   └── mcp.json                 # MCP server configuration
 │   ├── skills/
-│   │   └── ecu-test/                # ECU-TEST automation skill
+│   │   ├── building-simulink-models/    # MathWorks upstream skill
+│   │   ├── simulating-simulink-models/  # MathWorks upstream skill
+│   │   ├── testing-simulink-models/     # MathWorks upstream skill
+│   │   ├── generate-requirement-drafts/ # MathWorks upstream skill
+│   │   ├── specifying-mbd-algorithms/   # MathWorks upstream skill
+│   │   ├── specifying-plant-models/     # MathWorks upstream skill
+│   │   ├── filing-bug-reports/          # MathWorks upstream skill
+│   │   └── ecu-test/                # Project-specific ECU-TEST skill
 │   │       ├── SKILL.md             # Skill definition and remote setup guide
 │   │       ├── scripts/
 │   │       │   ├── ecu-test-adapter.sh   # Adapter (local/remote routing)
@@ -204,10 +245,17 @@ Using the ecu.test skill:
 │   │       │   ├── remote/               # Linux-adapted scripts for EC2
 │   │       │   └── *.py                  # Local scripts
 │   │       └── *.md                 # Capability guides
-│   └── specs/
-│       └── remote-ecu-test-execution/   # Spec-driven design docs
+│   ├── specs/
+│   │   ├── remote-ecu-test-execution/   # Spec: remote execution feature
+│   │   └── repository-optimization/     # Spec: repo cleanup
 │   └── steering/
-│       └── ecu-test-project-config.md   # Project-specific ecu-test knowledge
+│       ├── matlab-simulink-setup.md         # MATLAB env + FMU build policy
+│       ├── ecu-test-project-config.md       # Project-specific model knowledge
+│       └── session-setup-checklist.md       # Quick pre-flight verification
+├── docs/
+│   ├── skill-architecture.md        # Skills & MCP layering documentation
+│   ├── skill-versions.md            # Upstream skill version tracking
+│   └── examples/                    # Demo artifacts and sample prompts
 ├── ecu.test-integration/
 │   ├── ecu.test_agent_fmu_demo/     # ECU-TEST workspace
 │   │   ├── .workspace/             # Workspace config (agent.xml, etc.)
@@ -216,7 +264,10 @@ Using the ecu.test skill:
 │   │   ├── fmu/                    # FMU model files
 │   │   └── Packages/               # Generated test packages
 │   └── reports/                    # Test execution reports (gitignored)
+├── matlab-models/                  # Runtime — populated during demo sessions
 ├── sample-requirements/            # Sample test case requirements (TM-601..TM-605)
+├── scripts/
+│   └── build_fmu_remote.sh         # Standalone FMU remote compilation
 ├── infra/
 │   └── ecu-test-ec2.yaml           # CloudFormation template for remote EC2
 ├── polarion-integration/
@@ -225,9 +276,29 @@ Using the ecu.test skill:
 ├── tests/
 │   └── unit/
 │       └── test_adapter_logic.py   # Property-based + unit tests
+├── .env.example                    # Environment variable template
 ├── .ecu-test-remote.json.example   # Remote config template
 └── README.md                       # This file
 ```
+
+## Steering Files
+
+Steering files provide project-specific context to Kiro sessions. All use `inclusion: manual` — activate them with `#filename` in chat when relevant.
+
+| Steering File | Activate when… |
+|---|---|
+| `matlab-simulink-setup` | Starting a session involving model creation, FMU export, or MATLAB environment setup |
+| `ecu-test-project-config` | Running tests against the Temperature Monitoring System model (signal names, thresholds, Polarion traceability) |
+| `session-setup-checklist` | Troubleshooting connectivity or verifying prerequisites before a session |
+
+Steering files live in `.kiro/steering/`. They supplement skills with project-specific values — they do not contain operational procedures (those live in the skills).
+
+## Convenience Scripts
+
+| Script | Purpose |
+|---|---|
+| `scripts/build_fmu_remote.sh` | Standalone remote FMU compilation via SSH. For the full workflow, use `ecu-test-adapter.sh --sync` then compile. |
+| `scripts/verify-setup.sh` | Check all prerequisites (MATLAB, toolkit, Python, Polarion venv, AWS CLI). Reports PASS/FAIL/WARN. |
 
 ## Remote ECU-TEST Execution
 
