@@ -352,7 +352,12 @@ All remote execution settings are centralized in `.ecu-test-remote.json` (see `.
    - Test case packages: use absolute paths on the remote
    - Package output: use absolute paths on the remote
 
-7. **AI Agent**: The `.workspace/agent.xml` must contain a reachable agent URL for `GenerateViaAi()` to work.
+7. **AI Agent**: The `.workspace/agent.xml` must contain a reachable agent URL and your ECU-TEST agent API token (`API-TOKEN`) for `GenerateViaAi()` to work. The file is gitignored because it holds the token. Create it from the template before the first `--sync`:
+   ```bash
+   cp ecu.test-integration/ecu.test_agent_fmu_demo/.workspace/agent.xml.example \
+      ecu.test-integration/ecu.test_agent_fmu_demo/.workspace/agent.xml
+   # then replace YOUR_ECU_TEST_AGENT_API_TOKEN with your token
+   ```
 
 See [SKILL.md](.kiro/skills/ecu-test/SKILL.md) for full setup instructions and the [steering file](.kiro/steering/ecu-test-project-config.md) for project-specific configuration details.
 

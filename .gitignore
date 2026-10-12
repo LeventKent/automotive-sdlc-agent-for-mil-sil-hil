@@ -147,6 +147,8 @@ notebooks/evaluation_results*
 # ECU-TEST remote config (contains SSH credentials)
 .ecu-test-remote.json
 license.lic
+# ECU-TEST agent settings (contains API token) - copy agent.xml.example to agent.xml
+ecu.test-integration/ecu.test_agent_fmu_demo/.workspace/agent.xml
 # Matlab
 simulink-agentic-toolkit/
 

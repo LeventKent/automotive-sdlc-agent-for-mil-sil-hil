@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AGENT-SETTINGS format-rev="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<URL xsi:type="string">https://agent.tracetronic.ai/</URL>
+	<API-TOKEN xsi:type="string">YOUR_ECU_TEST_AGENT_API_TOKEN</API-TOKEN>
+	<PROXY-SETTINGS xsi:type="tmsProxySettings">
+		<FLAG_PROXY_SELECTION xsi:type="integer">1</FLAG_PROXY_SELECTION>
+	</PROXY-SETTINGS>
+	<USER-PROMPT xsi:type="string">* if you have to start simulations, the teststep can return None, which is ok</USER-PROMPT>
+</AGENT-SETTINGS>
